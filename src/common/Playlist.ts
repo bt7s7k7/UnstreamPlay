@@ -33,6 +33,6 @@ export const PlaylistManagerContract = StructSyncContract.define(class PlaylistM
 }) { }, {
     deletePlaylist: ActionType.define("deletePlaylist", Type.object({ playlist: Type.string }), Type.empty),
     createPlaylist: ActionType.define("createPlaylist", Type.object({ label: Type.string }), Type.string),
-    getPlaylistsWithTrack: ActionType.define("getPlaylistsWithTrack", Type.object({ tract: Type.string }), Type.empty),
+    getPlaylistsWithTrack: ActionType.define("getPlaylistsWithTrack", Type.object({ track: Type.string }), Type.string.as(Type.set)),
     getPlaylistsSnippet: ActionType.define("getPlaylistsSnippet", Type.empty, Track.ref().as(Type.array).as(Type.map))
 })

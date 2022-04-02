@@ -4,7 +4,8 @@ import { createInterface } from "readline"
 import { Server } from "socket.io"
 import { DataPort } from "../backend/DataPort"
 import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
-import { TrackImporterController } from "../backend/TrackImporterController"
+import { TrackEditorController } from "../backend/tracks/TrackEditorController"
+import { TrackImporterController } from "../backend/tracks/TrackImporterController"
 import { stringifyAddress } from "../comTypes/util"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
 import { MessageBridge } from "../dependencyInjection/commonServices/MessageBridge"
@@ -30,10 +31,11 @@ DataPort.init(logger).catch(err => {
     const io = new Server(http)
 
     context.provide(IDProvider, () => new IDProvider.Incremental())
-    const server = context.provide(StructSyncServer, "default")
+    context.provide(StructSyncServer, "default")
 
     const trackImporter = context.instantiate(() => TrackImporterController.default().register())
     context.instantiate(() => PlaylistManagerController.make().register())
+    context.instantiate(() => TrackEditorController.default().register())
 
     io.on("connect", (socket) => {
         const sessionContext = new DIContext(context)

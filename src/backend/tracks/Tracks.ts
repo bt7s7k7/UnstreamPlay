@@ -1,7 +1,8 @@
-import { logger } from "../app/app"
-import { DATABASE } from "../app/DATABASE"
-import { Track } from "../common/Track"
-import { EventEmitter } from "../eventLib/EventEmitter"
+import { logger } from "../../app/app"
+import { DATABASE } from "../../app/DATABASE"
+import { Track } from "../../common/Track"
+import { modify } from "../../comTypes/util"
+import { EventEmitter } from "../../eventLib/EventEmitter"
 
 export namespace Tracks {
     export const onTrackUpdated = new EventEmitter<Track>()
@@ -16,5 +17,10 @@ export namespace Tracks {
 
     export function findTrack(trackID: string) {
         return DATABASE.tryGet("tracks", trackID)
+    }
+
+    export function updateTrack(track: Track, update: Omit<Partial<Track>, "serialize">) {
+        modify(track, update)
+        onTrackUpdated.emit(track)
     }
 }

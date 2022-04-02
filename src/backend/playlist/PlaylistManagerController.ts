@@ -5,7 +5,7 @@ import { makeRandomID } from "../../comTypes/util"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { StructSyncContract } from "../../structSync/StructSyncContract"
 import { ClientError } from "../../structSync/StructSyncServer"
-import { Tracks } from "../Tracks"
+import { Tracks } from "../tracks/Tracks"
 import { PlaylistController } from "./PlaylistController"
 
 export class PlaylistManagerController extends PlaylistManagerContract.defineController() {
@@ -42,8 +42,15 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
 
             return result
         },
-        getPlaylistsWithTrack: async () => {
-            throw new ClientError("Action not implemented yet!")
+        getPlaylistsWithTrack: async ({ track }) => {
+            const playlists = new Set<string>()
+
+            for (const playlist of this.playlistControllers.values()) {
+                if (playlist.id == ROOT_PLAYLIST_ID) continue
+                if (playlist.trackIndex.has(track)) playlists.add(playlist.id)
+            }
+
+            return playlists
         }
     })
 

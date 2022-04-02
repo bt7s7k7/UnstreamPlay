@@ -1,5 +1,6 @@
 import { mdiDownload, mdiPlus } from "@mdi/js"
-import { computed, defineComponent, ref } from "vue"
+import { computed, defineComponent, onUnmounted, ref, watch } from "vue"
+import { EventListener } from "../eventLib/EventListener"
 import { Button } from "../vue3gui/Button"
 import { useDynamicsEmitter } from "../vue3gui/DynamicsEmitter"
 import { Icon } from "../vue3gui/Icon"
@@ -16,6 +17,16 @@ export const HomeScreen = (defineComponent({
         const emitter = useDynamicsEmitter()
         const playlists = computed(() => STATE.playlists.playlists)
         const snippets = asyncComputed(() => { }, () => STATE.playlists.getPlaylistsSnippet(), { persist: true })
+
+        const listener = new EventListener()
+        onUnmounted(() => listener.dispose())
+        STATE.onPlaylistsProbablyChanged.add(listener, () => {
+            snippets.reload()
+        })
+
+        watch(() => playlists.value.size, () => {
+            snippets.reload()
+        })
 
         const openTrackImporter = useTrackImporter()
 

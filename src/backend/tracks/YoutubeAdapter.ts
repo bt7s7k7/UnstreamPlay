@@ -1,6 +1,6 @@
 import axios from "axios"
 import { extname } from "path"
-import { ENV } from "../app/ENV"
+import { ENV } from "../../app/ENV"
 
 namespace APITypes {
     export interface Entity {

@@ -21,5 +21,5 @@ export const TractImporterContract = StructSyncContract.define(class TractImport
 
 export const TrackEditorContract = StructSyncContract.define(class TrackEditor extends Struct.define("TrackEditor", {}) { }, {
     setTrackLabel: ActionType.define("setTrackLabel", Type.object({ track: Type.string, label: Type.string }), Type.empty),
-    setTrackAuthor: ActionType.define("setTrackAuthor", Type.object({ track: Type.string, label: Type.string }), Type.empty)
+    setTrackAuthor: ActionType.define("setTrackAuthor", Type.object({ track: Type.string, author: Type.string }), Type.empty)
 })

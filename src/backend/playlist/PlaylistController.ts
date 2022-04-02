@@ -3,7 +3,7 @@ import { PlaylistContract, PlaylistData, PlaylistInfo, ROOT_PLAYLIST_ID } from "
 import { Track } from "../../common/Track"
 import { EventEmitter } from "../../eventLib/EventEmitter"
 import { ClientError } from "../../structSync/StructSyncServer"
-import { Tracks } from "../Tracks"
+import { Tracks } from "../tracks/Tracks"
 
 export class PlaylistController extends PlaylistContract.defineController() {
     public readonly onInfoChanged = new EventEmitter<PlaylistInfo>()
@@ -13,17 +13,22 @@ export class PlaylistController extends PlaylistContract.defineController() {
 
     public impl = super.impl({
         addTrack: async ({ track: trackID }) => {
+            if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot add tracks to root playlist")
+
             const track = Tracks.findTrack(trackID)
             if (!track) throw new ClientError(`No track with id "${trackID}" found`)
             this.addTrack(track)
         },
         removeTrack: async ({ track: trackID }) => {
+            if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot remove tracks from root playlist")
+
             const track = Tracks.findTrack(trackID)
             if (!track) throw new ClientError(`No track with id "${trackID}" found`)
             this.removeTrack(track)
         },
         setLabel: async ({ label }) => {
             if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot change name of root playlist")
+
             this.mutate(v => v.label = label)
             this.data.label = label
             this.onInfoChanged.emit(this.getInfo())
