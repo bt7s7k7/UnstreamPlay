@@ -1,5 +1,5 @@
 import { DATABASE } from "../../app/DATABASE"
-import { PlaylistContract, PlaylistData, PlaylistInfo } from "../../common/Playlist"
+import { PlaylistContract, PlaylistData, PlaylistInfo, ROOT_PLAYLIST_ID } from "../../common/Playlist"
 import { Track } from "../../common/Track"
 import { EventEmitter } from "../../eventLib/EventEmitter"
 import { ClientError } from "../../structSync/StructSyncServer"
@@ -23,6 +23,7 @@ export class PlaylistController extends PlaylistContract.defineController() {
             this.removeTrack(track)
         },
         setLabel: async ({ label }) => {
+            if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot change name of root playlist")
             this.mutate(v => v.label = label)
             this.data.label = label
             this.onInfoChanged.emit(this.getInfo())

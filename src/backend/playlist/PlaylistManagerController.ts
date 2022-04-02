@@ -1,6 +1,9 @@
 import { DATABASE } from "../../app/DATABASE"
 import { PlaylistData, PlaylistManagerContract, ROOT_PLAYLIST_ID } from "../../common/Playlist"
 import { Track } from "../../common/Track"
+import { makeRandomID } from "../../comTypes/util"
+import { DISPOSE } from "../../eventLib/Disposable"
+import { StructSyncContract } from "../../structSync/StructSyncContract"
 import { ClientError } from "../../structSync/StructSyncServer"
 import { Tracks } from "../Tracks"
 import { PlaylistController } from "./PlaylistController"
@@ -9,11 +12,26 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
     public playlistControllers = new Map<string, PlaylistController>()
 
     public impl = super.impl({
-        createPlaylist: async () => {
-            throw new ClientError("Action not implemented yet!")
+        createPlaylist: async ({ label }) => {
+            const playlistData = new PlaylistData({
+                id: makeRandomID(),
+                label, tracks: new Set()
+            })
+
+            DATABASE.put("playlists", playlistData)
+
+            this.loadPlaylist(playlistData)
+
+            return playlistData.id
         },
-        deletePlaylist: async () => {
-            throw new ClientError("Action not implemented yet!")
+        deletePlaylist: async ({ playlist }) => {
+            if (playlist == ROOT_PLAYLIST_ID) throw new ClientError("Cannot delete root playlist")
+            const controller = this.playlistControllers.get(playlist)
+            if (!controller) throw new ClientError(`There is no playlist with id "${playlist}"`)
+
+            controller[DISPOSE]()
+            DATABASE.delete("playlists", playlist)
+            this.mutate(v => v.playlists.delete(playlist))
         },
         getPlaylistsSnippet: async () => {
             const result = new Map<string, Track[]>()
@@ -31,6 +49,7 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
 
     protected loadPlaylist(playlistData: PlaylistData) {
         const controller = PlaylistController.make(playlistData)
+        controller.register(this[StructSyncContract.SERVER] ?? undefined)
         this.mutate(v => v.playlists.set(controller.id, controller.getInfo()))
 
         controller.onInfoChanged.add(this, info => {

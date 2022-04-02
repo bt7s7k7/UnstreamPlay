@@ -7,6 +7,7 @@ import { DIContext } from "../dependencyInjection/DIContext"
 import { EventListener } from "../eventLib/EventListener"
 import { StructSyncClient } from "../structSync/StructSyncClient"
 import { PlaylistManagerProxy } from "./playlist/PlaylistManagerProxy"
+import { PlaylistProxy } from "./playlist/PlaylistProxy"
 import { TrackImporterProxy } from "./track/TrackImporterProxy"
 
 class State extends EventListener {
@@ -44,6 +45,12 @@ class State extends EventListener {
 
     public async getTrackImporter() {
         return TrackImporterProxy.make(this.context, { track: true })
+    }
+
+    public callPlaylistAction(id: string) {
+        const playlist = this.context.instantiate(() => PlaylistProxy.default())
+        playlist.id = id
+        return playlist
     }
 
     constructor() {

@@ -1,21 +1,40 @@
-import { mdiDownload, mdiReload, mdiShuffle } from "@mdi/js"
-import { computed, defineComponent } from "vue"
+import { mdiDownload, mdiPlus } from "@mdi/js"
+import { computed, defineComponent, ref } from "vue"
 import { Button } from "../vue3gui/Button"
+import { useDynamicsEmitter } from "../vue3gui/DynamicsEmitter"
 import { Icon } from "../vue3gui/Icon"
-import { LoadingIndicator } from "../vue3gui/LoadingIndicator"
+import { TextField } from "../vue3gui/TextField"
 import { asyncComputed } from "../vue3gui/util"
+import { PlaylistSnippetView } from "./playlist/PlaylistSnippetView"
 import { STATE } from "./State"
-import { TrackCard } from "./track/TrackCard"
 import { useTrackImporter } from "./track/TrackImporterView"
 import icon from "/favicon.ico"
 
 export const HomeScreen = (defineComponent({
     name: "HomeScreen",
     setup(props, ctx) {
+        const emitter = useDynamicsEmitter()
         const playlists = computed(() => STATE.playlists.playlists)
-        const snippets = asyncComputed(() => { }, () => STATE.playlists.getPlaylistsSnippet())
+        const snippets = asyncComputed(() => { }, () => STATE.playlists.getPlaylistsSnippet(), { persist: true })
 
         const openTrackImporter = useTrackImporter()
+
+        async function createPlaylist(event: MouseEvent) {
+            const name = ref("")
+            const popup = await emitter.popup(event.target as HTMLElement, () => (
+                <TextField focus placeholder="Playlist label" class="w-200" vModel={name.value} />
+            ), {
+                align: "over",
+                props: {
+                    backdropCancels: true
+                }
+            })
+
+            if (popup && name.value) {
+                await STATE.playlists.createPlaylist({ label: name.value })
+                snippets.reload()
+            }
+        }
 
         return () => (
             <div class="flex-fill flex column center-cross bg-black-transparent">
@@ -28,33 +47,11 @@ export const HomeScreen = (defineComponent({
                 </div>
                 <div class="flex column as-page">
                     {[...playlists.value.values()].map((playlist) => (
-                        <div class="flex column border-bottom">
-                            <h3 class="flex row center-cross">
-                                <div class="mb-1 mr-2">
-                                    {playlist.label}
-                                </div>
-                                <Button clear> <Icon icon={mdiShuffle} /> </Button>
-                                <Button clear> <Icon icon={mdiReload} /> </Button>
-                            </h3>
-                            <div class="flex-basis-150">
-                                {snippets.value == null ? (
-                                    <div class="absolute-fill flex center">
-                                        <LoadingIndicator />
-                                    </div>
-                                ) : snippets.value.get(playlist.id)?.length as number > 0 ? (
-                                    <div class="absolute-fill flex row pb-2">
-                                        {snippets.value.get(playlist.id)!.map(track => (
-                                            <TrackCard track={track} key={track.id} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div class="absolute-fill flex center">
-                                        <div class="muted">Playlist empty</div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <PlaylistSnippetView key={`playlist-${playlist.id}`} playlist={playlist} snippet={snippets.value?.get(playlist.id)} />
                     ))}
+                    <div class="mt-4">
+                        <Button onClick={createPlaylist} clear> <Icon icon={mdiPlus} /> Create playlist </Button>
+                    </div>
                 </div>
             </div>
         )
