@@ -3,6 +3,8 @@ import { join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
 import { DataPort } from "../backend/DataPort"
+import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
+import { TrackImporterController } from "../backend/TrackImporterController"
 import { stringifyAddress } from "../comTypes/util"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
 import { MessageBridge } from "../dependencyInjection/commonServices/MessageBridge"
@@ -15,51 +17,59 @@ import { ENV } from "./ENV"
 import express = require("express")
 
 const context = new DIContext()
-const logger = context.provide(Logger, () => new NodeLogger())
+export const logger = context.provide(Logger, () => new NodeLogger())
 
 DataPort.init(logger).catch(err => {
     logger.error`${err}`
     process.exit(1)
-})
+}).then(v => {
+    logger.info`Config: ${ENV}`
 
-logger.info`Config: ${ENV}`
+    const app = express()
+    const http = createServer(app)
+    const io = new Server(http)
 
-const app = express()
-const http = createServer(app)
-const io = new Server(http)
+    context.provide(IDProvider, () => new IDProvider.Incremental())
+    const server = context.provide(StructSyncServer, "default")
 
-context.provide(IDProvider, () => new IDProvider.Incremental())
-const server = context.provide(StructSyncServer, "default")
+    const trackImporter = context.instantiate(() => TrackImporterController.default().register())
+    context.instantiate(() => PlaylistManagerController.make().register())
 
-io.on("connect", (socket) => {
-    const sessionContext = new DIContext(context)
-    sessionContext.provide(MessageBridge, () => new MessageBridge.Generic(socket))
-    const session = sessionContext.provide(StructSyncSession, "default")
+    io.on("connect", (socket) => {
+        const sessionContext = new DIContext(context)
+        sessionContext.provide(MessageBridge, () => new MessageBridge.Generic(socket))
+        const session = sessionContext.provide(StructSyncSession, "default")
 
-    session.onError.add(null, (error) => logger.error`${error}`)
+        session.onError.add(null, (error) => logger.error`${error}`)
 
-    socket.on("disconnect", () => {
-        sessionContext.dispose()
+        socket.on("disconnect", () => {
+            sessionContext.dispose()
+        })
     })
-})
 
-const distFolder = join(ENV.BASE_DIR, "frontend/dist")
-app.use("/", express.static(distFolder))
-app.use("/", (req, res) => res.status(200).sendFile(join(distFolder, "index.html")))
+    app.use("/tracks", express.static(DataPort.getTracksFolder()))
+    app.use("/icons", express.static(DataPort.getIconsFolder()))
 
-http.listen(ENV.PORT, () => {
-    logger.info`Listening on ${"http://" + stringifyAddress(http.address())}`
-})
+    const distFolder = join(ENV.BASE_DIR, "frontend/dist")
+    app.use("/", express.static(distFolder))
+    app.use("/", (req, res) => res.status(200).sendFile(join(distFolder, "index.html")))
 
-const rl = createInterface(process.stdin, process.stdout)
-rl.setPrompt("")
+    http.listen(ENV.PORT, () => {
+        logger.info`Listening on ${"http://" + stringifyAddress(http.address())}`
+    })
 
-rl.on("line", (line) => {
-    const [command, ...args] = line.split(" ")
+    const rl = createInterface(process.stdin, process.stdout)
+    rl.setPrompt("")
 
-    if (command == "ping") {
-        logger.info`Pong!`
-    } else {
-        logger.error`Unknown command`
-    }
+    rl.on("line", (line) => {
+        const [command, ...args] = line.split(" ")
+
+        if (command == "import") {
+            trackImporter.importTracks()
+        } else if (command == "reset") {
+            DataPort.deleteEverything().then(() => process.exit(0))
+        } else {
+            logger.error`Unknown command`
+        }
+    })
 })

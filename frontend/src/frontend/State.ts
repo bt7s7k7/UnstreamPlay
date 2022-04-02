@@ -6,11 +6,14 @@ import { MessageBridge } from "../dependencyInjection/commonServices/MessageBrid
 import { DIContext } from "../dependencyInjection/DIContext"
 import { EventListener } from "../eventLib/EventListener"
 import { StructSyncClient } from "../structSync/StructSyncClient"
+import { PlaylistManagerProxy } from "./playlist/PlaylistManagerProxy"
+import { TrackImporterProxy } from "./track/TrackImporterProxy"
 
 class State extends EventListener {
     public ready = false
     public connected = false
     public readonly context: DIContext = null!
+    public readonly playlists: PlaylistManagerProxy = null!
 
     protected init() {
         const socket = markRaw(io())
@@ -30,9 +33,17 @@ class State extends EventListener {
         bridge.obfuscateHandlerErrors = false
         context.provide(StructSyncClient, "default")
 
-        modify(this as State, { context })
+        const playlists = context.instantiate(() => PlaylistManagerProxy.default())
+
+        modify(this as State, { context, playlists })
+
+        this.playlists.synchronize()
 
         this.ready = true
+    }
+
+    public async getTrackImporter() {
+        return TrackImporterProxy.make(this.context, { track: true })
     }
 
     constructor() {
@@ -44,3 +55,6 @@ class State extends EventListener {
 }
 
 export const STATE = new State()
+
+// @ts-ignore
+window.state = STATE

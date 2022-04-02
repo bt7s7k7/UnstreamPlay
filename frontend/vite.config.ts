@@ -12,8 +12,7 @@ export default defineConfig(() => {
         server: {
             port: +process.env.PORT ?? 8080,
             proxy: {
-                "^/api": { target: process.env.BACKEND_URL, changeOrigin: true, ws: true },
-                "^/socket.io": { target: process.env.BACKEND_URL, changeOrigin: true, ws: true },
+                "^/(api|socket\\.io|icons|tracks)": { target: process.env.BACKEND_URL, changeOrigin: true, ws: true },
             }
         }
     }

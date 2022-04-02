@@ -6,7 +6,8 @@ const BASE_DIR = __filename.endsWith("/index.js") || __filename.endsWith("\\inde
 
 const Env_t = Type.object({
     PORT: Type.string,
-    DATA_PATH: Type.string
+    DATA_PATH: Type.string,
+    API_KEY: Type.string
 })
 
 dotenv.config({ path: join(BASE_DIR, ".env.local") })
