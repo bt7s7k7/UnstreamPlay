@@ -70,6 +70,7 @@ export const PlaylistInclusionForm = (defineComponent({
             } else {
                 if (props.track) {
                     await STATE.callPlaylistAction(id).addTrack({ track: props.track.id })
+                    STATE.lastAddedPlaylist = id
                 }
 
                 if (props.editImported) {

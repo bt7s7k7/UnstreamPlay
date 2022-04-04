@@ -1,9 +1,11 @@
 import { mdiDownload, mdiMagnify, mdiPlaylistMusic, mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
 import { computed, defineComponent, onMounted, onUnmounted, ref, toRaw, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import { ROOT_PLAYLIST_ID } from "../../common/Playlist"
 import { Track } from "../../common/Track"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { Button } from "../../vue3gui/Button"
+import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
 import { Icon } from "../../vue3gui/Icon"
 import { LoadingIndicator } from "../../vue3gui/LoadingIndicator"
 import { Overlay } from "../../vue3gui/Overlay"
@@ -22,6 +24,7 @@ export const PlaylistScreen = (defineComponent({
         const route = useRoute()
         const router = useRouter()
         const openTrackImporter = useTrackImporter()
+        const emitter = useDynamicsEmitter()
 
         const params = computed(() => ({
             playlistID: route.params.playlist as string,
@@ -130,6 +133,19 @@ export const PlaylistScreen = (defineComponent({
         useTitle(computed(() => (selectedTrack.value ? selectedTrack.value.label + " - " : "") + playlist.value?.label))
 
 
+        async function removeTrack(track: Track) {
+            if (!playlist.value) return
+
+            if (playlist.value.id == ROOT_PLAYLIST_ID) {
+                if (!await emitter.confirm(`Do you want to permanently delete track "${track.author} - ${track.label}"`)) return
+                await STATE.trackEditor.deleteTrack({ track: track.id })
+                return
+            }
+
+            await playlist.value.removeTrack({ track: track.id })
+        }
+
+
         return () => (
             <Overlay class="flex-fill flex row" show={playlist.value == null}>{{
                 overlay: () => <LoadingIndicator />,
@@ -170,7 +186,14 @@ export const PlaylistScreen = (defineComponent({
                         <div class="flex-fill bg-black-transparent">
                             <div class="absolute-fill scroll">
                                 {tracks.value.map(track => (
-                                    <TrackListEntry onClick={() => selectTrack(track.id)} key={track.id} active={track.id == selectedTrackID.value} class="w-fill p-2" track={track} />
+                                    <TrackListEntry
+                                        onRemove={() => removeTrack(track)}
+                                        onClick={() => selectTrack(track.id)}
+                                        key={track.id}
+                                        active={track.id == selectedTrackID.value}
+                                        class="w-fill p-2"
+                                        track={track}
+                                    />
                                 ))}
                             </div>
                         </div>

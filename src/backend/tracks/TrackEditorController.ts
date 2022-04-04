@@ -13,6 +13,11 @@ export class TrackEditorController extends TrackEditorContract.defineController(
             const track = Tracks.findTrack(trackID)
             if (!track) throw new ClientError(`No track with id "${trackID}" found`)
             Tracks.updateTrack(track, { label })
+        },
+        deleteTrack: async ({ track: trackID }) => {
+            const track = Tracks.findTrack(trackID)
+            if (!track) throw new ClientError(`No track with id "${trackID}" found`)
+            Tracks.deleteTrack(track)
         }
     })
 }

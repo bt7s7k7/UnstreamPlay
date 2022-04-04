@@ -2,6 +2,7 @@ import { mkdir, opendir, readFile, rename, rm, writeFile } from "fs/promises"
 import { join, parse } from "path"
 import { DATABASE } from "../app/DATABASE"
 import { ENV } from "../app/ENV"
+import { Track } from "../common/Track"
 import { Logger } from "../logger/Logger"
 
 const TRACK_EXTS = new Set([".opus", ".m4a", ".mp3", ".ogg", ".wav"])
@@ -79,5 +80,15 @@ export namespace DataPort {
 
     export function getIconsFolder() {
         return iconsPath
+    }
+
+    export async function deleteTrackData(track: Track) {
+        if (track.icon) {
+            await rm(join(iconsPath, track.icon))
+        }
+
+        if (track.url) {
+            await rm(join(tracksPath, track.url))
+        }
     }
 }

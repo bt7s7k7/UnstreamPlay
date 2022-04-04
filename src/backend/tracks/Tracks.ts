@@ -3,6 +3,7 @@ import { DATABASE } from "../../app/DATABASE"
 import { Track } from "../../common/Track"
 import { modify } from "../../comTypes/util"
 import { EventEmitter } from "../../eventLib/EventEmitter"
+import { DataPort } from "../DataPort"
 
 export namespace Tracks {
     export const onTrackUpdated = new EventEmitter<Track>()
@@ -22,5 +23,11 @@ export namespace Tracks {
     export function updateTrack(track: Track, update: Omit<Partial<Track>, "serialize">) {
         modify(track, update)
         onTrackUpdated.emit(track)
+    }
+
+    export function deleteTrack(track: Track) {
+        DATABASE.delete("tracks", track.id)
+        DataPort.deleteTrackData(track)
+        onTrackDeleted.emit(track)
     }
 }

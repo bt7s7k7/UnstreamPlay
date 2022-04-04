@@ -20,6 +20,7 @@ class State extends EventListener {
     public readonly context: DIContext = null!
     public readonly playlists: PlaylistManagerProxy = null!
     public readonly trackEditor: TrackEditorProxy = null!
+    public lastAddedPlaylist: string | null = null
 
     protected init() {
         const socket = markRaw(io())
