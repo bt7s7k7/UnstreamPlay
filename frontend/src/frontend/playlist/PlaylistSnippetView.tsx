@@ -58,7 +58,7 @@ export const PlaylistSnippetView = (defineComponent({
                             <LoadingIndicator />
                         </div>
                     ) : props.snippet.length > 0 ? (
-                        <div class="absolute-fill flex row pb-2">
+                        <div class="absolute-fill flex row pb-2 overflow-hidden">
                             {props.snippet.map(track => (
                                 <TrackCard to={`/playlist/${props.playlist.id}?track=${track.id}`} track={track} key={track.id} />
                             ))}
