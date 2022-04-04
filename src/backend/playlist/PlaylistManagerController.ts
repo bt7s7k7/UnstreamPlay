@@ -5,11 +5,14 @@ import { makeRandomID } from "../../comTypes/util"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { StructSyncContract } from "../../structSync/StructSyncContract"
 import { ClientError } from "../../structSync/StructSyncServer"
+import { TrackImporterController } from "../tracks/TrackImporterController"
 import { Tracks } from "../tracks/Tracks"
 import { PlaylistController } from "./PlaylistController"
 
 export class PlaylistManagerController extends PlaylistManagerContract.defineController() {
     public playlistControllers = new Map<string, PlaylistController>()
+
+    public trackImporter: TrackImporterController = null!
 
     public impl = super.impl({
         createPlaylist: async ({ label }) => {
@@ -56,6 +59,7 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
 
     protected loadPlaylist(playlistData: PlaylistData) {
         const controller = PlaylistController.make(playlistData)
+        controller.manager = this
         controller.register(this[StructSyncContract.SERVER] ?? undefined)
         this.mutate(v => v.playlists.set(controller.id, controller.getInfo()))
 

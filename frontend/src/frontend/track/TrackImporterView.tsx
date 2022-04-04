@@ -1,4 +1,4 @@
-import { mdiCloudDownloadOutline } from "@mdi/js"
+import { mdiCloudDownloadOutline, mdiDownload, mdiPlaylistPlus } from "@mdi/js"
 import { defineComponent, nextTick, onMounted, onUnmounted, ref, Transition, watch } from "vue"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { Button } from "../../vue3gui/Button"
@@ -8,12 +8,15 @@ import { Icon } from "../../vue3gui/Icon"
 import { LoadingIndicator } from "../../vue3gui/LoadingIndicator"
 import { Overlay } from "../../vue3gui/Overlay"
 import { asyncComputed } from "../../vue3gui/util"
+import { PlaylistInclusionForm } from "../playlist/PlaylistInclusionForm"
 import { STATE } from "../State"
-import { TrackListEntry } from "./TrackListEntry"
+import { TrackCard } from "./TrackCard"
 
 export const TrackImporterScreen = (defineComponent({
     name: "TrackImporterScreen",
     setup(props, ctx) {
+        const emitter = useDynamicsEmitter()
+
         const trackImporter = asyncComputed(() => { }, () => STATE.getTrackImporter(), {
             finalizer: v => v[DISPOSE]()
         })
@@ -23,6 +26,16 @@ export const TrackImporterScreen = (defineComponent({
         async function importTracks() {
             if (trackImporter.value == null) return
             trackImporter.value.importTracks()
+        }
+
+        async function addAllToPlaylist() {
+            emitter.modal(PlaylistInclusionForm, {
+                contentProps: { editImported: true, class: "flex-fill" },
+                props: {
+                    class: "w-300 h-500",
+                    cancelButton: "Close"
+                }
+            })
         }
 
         watch(() => trackImporter.value?.downloadOutput?.length, () => {
@@ -59,10 +72,15 @@ export const TrackImporterScreen = (defineComponent({
                     </div>
                     <Transition name="as-slide-x">
                         {trackImporter.value.downloadedTracks?.size as number > 0 ? (
-                            <div key="tracks" class="flex-fill border">
-                                <div class="absolute-fill flex column scroll">
+                            <div key="tracks" class="flex-fill border rounded">
+                                <div class="absolute-fill scroll py-2 px-1">
+                                    <div class="border rounded p-2 mx-2 mt-1 mb-2 flex row gap-2">
+                                        Actions:
+                                        <Button onClick={addAllToPlaylist} clear> <Icon icon={mdiPlaylistPlus} /> Add all to playlist </Button>
+                                        <Button onClick={importTracks} clear> <Icon icon={mdiDownload} /> Import more </Button>
+                                    </div>
                                     {[...trackImporter.value.downloadedTracks!.values()].map(track => (
-                                        <TrackListEntry track={track} key={track.id} />
+                                        <TrackCard class="inline-block" track={track} key={track.id} />
                                     ))}
                                 </div>
                             </div>
@@ -71,7 +89,7 @@ export const TrackImporterScreen = (defineComponent({
                                 <pre ref={downloadOutputView} class="absolute-fill scroll m-0 p-2" key="output">{trackImporter.value.downloadOutput.join("")}</pre>
                             </div>
                         ) : (
-                            <div key="initial" class="flex-fill border flex center column">
+                            <div key="initial" class="flex-fill border flex center column rounded">
                                 <h1 class="m-0"> <Icon icon={mdiCloudDownloadOutline} /> </h1>
                                 <div class="mb-2"> No tracks imported </div>
                                 <Button onClick={importTracks}>Import now</Button>

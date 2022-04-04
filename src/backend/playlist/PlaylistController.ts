@@ -4,16 +4,29 @@ import { Track } from "../../common/Track"
 import { EventEmitter } from "../../eventLib/EventEmitter"
 import { ClientError } from "../../structSync/StructSyncServer"
 import { Tracks } from "../tracks/Tracks"
+import { PlaylistManagerController } from "./PlaylistManagerController"
 
 export class PlaylistController extends PlaylistContract.defineController() {
     public readonly onInfoChanged = new EventEmitter<PlaylistInfo>()
 
     public trackIndex = new Map<string, Track>()
     public data: PlaylistData = null!
+    public manager: PlaylistManagerController = null!
 
     public impl = super.impl({
         addTrack: async ({ track: trackID }) => {
             if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot add tracks to root playlist")
+
+            if (trackID == "$imported") {
+                const tracks = this.manager.trackImporter.downloadedTracks
+                if (!tracks) throw new ClientError("There are no tracks imported")
+
+                for (const track of tracks.values()) {
+                    this.addTrack(track)
+                }
+
+                return
+            }
 
             const track = Tracks.findTrack(trackID)
             if (!track) throw new ClientError(`No track with id "${trackID}" found`)
@@ -21,6 +34,17 @@ export class PlaylistController extends PlaylistContract.defineController() {
         },
         removeTrack: async ({ track: trackID }) => {
             if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot remove tracks from root playlist")
+
+            if (trackID == "$imported") {
+                const tracks = this.manager.trackImporter.downloadedTracks
+                if (!tracks) throw new ClientError("There are no tracks imported")
+
+                for (const track of tracks.values()) {
+                    this.removeTrack(track)
+                }
+
+                return
+            }
 
             const track = Tracks.findTrack(trackID)
             if (!track) throw new ClientError(`No track with id "${trackID}" found`)

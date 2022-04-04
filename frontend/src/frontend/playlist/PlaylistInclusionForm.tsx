@@ -13,25 +13,28 @@ import { STATE } from "../State"
 export const PlaylistInclusionForm = (defineComponent({
     name: "PlaylistInclusionForm",
     props: {
-        track: { type: Track, required: true }
+        track: { type: Track, required: false },
+        editImported: { type: Boolean }
     },
     setup(props, ctx) {
         const emitter = useDynamicsEmitter()
 
         const included = reactive(new Set<string>())
-        const loading = ref(true)
+        const loading = ref(false)
 
         function reloadPlaylists() {
             included.clear()
-            loading.value = true
+            if (props.track) loading.value = true
 
-            STATE.playlists.getPlaylistsWithTrack({ track: props.track.id }).then(playlists => {
-                for (const playlist of playlists) {
-                    included.add(playlist)
-                }
+            if (props.track) {
+                STATE.playlists.getPlaylistsWithTrack({ track: props.track.id }).then(playlists => {
+                    for (const playlist of playlists) {
+                        included.add(playlist)
+                    }
 
-                loading.value = false
-            })
+                    loading.value = false
+                })
+            }
         }
 
         reloadPlaylists()
@@ -55,15 +58,26 @@ export const PlaylistInclusionForm = (defineComponent({
 
         async function togglePlaylist(id: string) {
             if (included.has(id)) {
-                await STATE.callPlaylistAction(id).removeTrack({ track: props.track.id })
+                if (props.track) {
+                    await STATE.callPlaylistAction(id).removeTrack({ track: props.track.id })
+                }
+
+                if (props.editImported) {
+                    await STATE.callPlaylistAction(id).removeTrack({ track: "$imported" })
+                }
+
                 included.delete(id)
             } else {
-                await STATE.callPlaylistAction(id).addTrack({ track: props.track.id })
+                if (props.track) {
+                    await STATE.callPlaylistAction(id).addTrack({ track: props.track.id })
+                }
+
+                if (props.editImported) {
+                    await STATE.callPlaylistAction(id).addTrack({ track: "$imported" })
+                }
+
                 included.add(id)
             }
-        }
-
-        async function removePlaylist(id: string) {
         }
 
         return () => (

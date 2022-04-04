@@ -34,8 +34,10 @@ DataPort.init(logger).catch(err => {
     context.provide(StructSyncServer, "default")
 
     const trackImporter = context.instantiate(() => TrackImporterController.default().register())
-    context.instantiate(() => PlaylistManagerController.make().register())
+    const playlistManager = context.instantiate(() => PlaylistManagerController.make().register())
     context.instantiate(() => TrackEditorController.default().register())
+
+    playlistManager.trackImporter = trackImporter
 
     io.on("connect", (socket) => {
         const sessionContext = new DIContext(context)
