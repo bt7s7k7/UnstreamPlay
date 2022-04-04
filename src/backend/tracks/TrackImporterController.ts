@@ -27,32 +27,41 @@ export class TrackImporterController extends TractImporterContract.defineControl
 
         this.write("Importing...")
         const tracks = new Map<string, Track>()
+        const queue: Promise<void>[] = []
+        let done = 0
         for (const trackFile of trackFiles) {
-            this.write("Importing: " + trackFile.name)
-            const track = new Track({
-                id: trackFile.id ?? makeRandomID(),
-                author: "unknown",
-                label: trackFile.name,
-                icon: "",
-                url: ""
-            })
+            queue.push((async () => {
+                const write = (msg: string) => this.write(`[IMPORT (${done}/${trackFiles.length})] ${trackFile.name} - ${msg}`)
 
-            if (trackFile.id) {
-                this.write("  Getting YouTube data...")
-                const youtubeData = await YoutubeAdapter.loadTrackInfo(track.id)
-                if (youtubeData) {
-                    track.label = youtubeData.label
-                    track.author = youtubeData.author
-                    track.icon = await DataPort.writeTrackIcon(track.id, youtubeData.icon, youtubeData.iconExtension)
-                } else {
-                    this.write("  Failed to get youtube data :(")
+                write("Importing: " + trackFile.name)
+                const track = new Track({
+                    id: trackFile.id ?? makeRandomID(),
+                    author: "unknown",
+                    label: trackFile.name,
+                    icon: "",
+                    url: ""
+                })
+
+                if (trackFile.id) {
+                    write("Getting YouTube data...")
+                    const youtubeData = await YoutubeAdapter.loadTrackInfo(track.id)
+                    if (youtubeData) {
+                        track.label = youtubeData.label
+                        track.author = youtubeData.author
+                        track.icon = await DataPort.writeTrackIcon(track.id, youtubeData.icon, youtubeData.iconExtension)
+                    } else {
+                        write("Failed to get youtube data :(")
+                    }
                 }
-            }
 
-            track.url = await trackFile.import(track.id)
-            Tracks.addTrack(track)
-            tracks.set(track.id, track)
+                track.url = await trackFile.import(track.id)
+                Tracks.addTrack(track)
+                tracks.set(track.id, track)
+                done++
+                write(`Done`)
+            })())
         }
+        await Promise.all(queue)
 
         this.mutate(v => v.isRunning = false)
         this.mutate(v => v.downloadOutput = null)
