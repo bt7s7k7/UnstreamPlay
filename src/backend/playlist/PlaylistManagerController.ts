@@ -40,7 +40,7 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
             const result = new Map<string, Track[]>()
 
             for (const playlist of this.playlistControllers.values()) {
-                result.set(playlist.id, playlist.tracks.slice(0, 5))
+                result.set(playlist.id, playlist.tracks.slice(0, 10))
             }
 
             return result
