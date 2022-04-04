@@ -1,17 +1,18 @@
 import { mdiOpenInNew, mdiPlaylistPlus } from "@mdi/js"
-import { defineComponent, h, ref } from "vue"
+import { defineComponent, ref } from "vue"
 import { Track } from "../../common/Track"
 import { Button } from "../../vue3gui/Button"
 import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
 import { Icon } from "../../vue3gui/Icon"
 import { TextField } from "../../vue3gui/TextField"
+import { getIconURL } from "../constants"
 import { PlaylistInclusionForm } from "../playlist/PlaylistInclusionForm"
 import { STATE } from "../State"
 
 export const TrackView = (defineComponent({
     name: "TrackView",
     props: {
-        track: { type: Track, required: true }
+        track: { type: Track, required: false }
     },
     setup(props, ctx) {
         const emitter = useDynamicsEmitter()
@@ -27,6 +28,8 @@ export const TrackView = (defineComponent({
         }
 
         async function editLabel(event: MouseEvent) {
+            if (props.track == null) return
+
             const label = ref(props.track.label)
             const popup = await emitter.popup(event.target as HTMLElement, () => (
                 <TextField focus class="w-200" vModel={label.value} />
@@ -45,6 +48,8 @@ export const TrackView = (defineComponent({
         }
 
         async function editAuthor(event: MouseEvent) {
+            if (props.track == null) return
+
             const author = ref(props.track.author)
             const popup = await emitter.popup(event.target as HTMLElement, () => (
                 <TextField focus class="w-200" vModel={author.value} />
@@ -64,20 +69,24 @@ export const TrackView = (defineComponent({
 
         return () => (
             <div class="flex column">
-                <div class="as-track-icon w-fill mb-4">
-                    <img src={`/icons/${props.track.icon}`} class="absolute-fill img-cover" />
+                <div class="as-track-icon w-fill">
+                    <img src={getIconURL(props.track?.icon)} class="absolute-fill img-cover bg-black" />
                 </div>
-                {ctx.slots.default && h(ctx.slots.default)}
-                <div>
-                    <small>Track:</small>
-                    <Button onClick={editLabel} clear><h3 class="m-0">{props.track.label}</h3></Button>
-                    <Button clear href={`https://www.youtube.com/watch?v=${props.track.id}`}> <Icon icon={mdiOpenInNew} /> </Button>
-                    <Button clear onClick={openPlaylistSettings}> <Icon icon={mdiPlaylistPlus} /> </Button>
-                </div>
-                <div>
-                    <small>Artist:</small>
-                    <Button onClick={editAuthor} clear><h3 class="m-0">{props.track.author}</h3></Button>
-                </div>
+                {ctx.slots.default ? ctx.slots.default?.() : <div class="mt-4"></div>}
+                {props.track != null && (
+                    <div class={ctx.slots.default != null && "px-4"}>
+                        <div>
+                            <small>Track:</small>
+                            <Button onClick={editLabel} clear><h3 class="m-0">{props.track.label}</h3></Button>
+                            <Button clear href={`https://www.youtube.com/watch?v=${props.track.id}`}> <Icon icon={mdiOpenInNew} /> </Button>
+                            <Button clear onClick={openPlaylistSettings}> <Icon icon={mdiPlaylistPlus} /> </Button>
+                        </div>
+                        <div>
+                            <small>Artist:</small>
+                            <Button onClick={editAuthor} clear><h3 class="m-0">{props.track.author}</h3></Button>
+                        </div>
+                    </div>
+                )}
                 <div>
                 </div>
             </div>

@@ -62,6 +62,10 @@ class State extends EventListener {
         return playlist
     }
 
+    public async findPlaylist(id: string) {
+        return PlaylistProxy.make(this.context, { id, track: true })
+    }
+
     constructor() {
         super()
         const self = reactive(this) as this

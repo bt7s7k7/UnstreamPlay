@@ -9,7 +9,7 @@ export class PlaylistInfo extends Struct.define("PlaylistInfo", {
     label: Type.string
 }) { }
 
-export const ROOT_PLAYLIST_ID = "__root"
+export const ROOT_PLAYLIST_ID = "all-tracks"
 
 export class PlaylistData extends Struct.define("PlaylistData", {
     id: Type.string,

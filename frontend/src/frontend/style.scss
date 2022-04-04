@@ -8,6 +8,25 @@
 }
 
 .as-track-icon {
-    aspect-ratio: 1.8021265092809517; /* 0.5549; */
+    aspect-ratio: 1.8021265092809517;
+    /* 0.5549; */
     object-fit: cover;
+}
+
+audio::-webkit-media-controls-panel {
+    background-color: #e5e5e5;
+    border-radius: 0;
+    filter: invert(100%);
+    padding: 0 25px 0 25px;
+}
+
+.as-audio-wrapper {
+    overflow: hidden;
+
+    >audio {
+        width: calc(100% + 50px);
+        position: relative;
+        left: -25px;
+        outline: none;
+    }
 }

@@ -1,4 +1,4 @@
-import { mdiReload, mdiShuffle, mdiTrashCan } from "@mdi/js"
+import { mdiRepeat, mdiShuffle, mdiTrashCan } from "@mdi/js"
 import { defineComponent, PropType, ref } from "vue"
 import { PlaylistInfo, ROOT_PLAYLIST_ID } from "../../common/Playlist"
 import { Track } from "../../common/Track"
@@ -48,8 +48,8 @@ export const PlaylistSnippetView = (defineComponent({
                     <Button onClick={changeLabel} clear class="mb-1 mr-2">
                         <h3 class="m-0">{props.playlist.label}</h3>
                     </Button>
-                    <Button clear> <Icon icon={mdiShuffle} /> </Button>
-                    <Button clear> <Icon icon={mdiReload} /> </Button>
+                    <Button to={`/playlist/${props.playlist.id}`} clear> <Icon icon={mdiShuffle} /> </Button>
+                    <Button to={`/playlist/${props.playlist.id}?type=linear`} clear> <Icon icon={mdiRepeat} /> </Button>
                     {props.playlist.id != ROOT_PLAYLIST_ID && <Button onClick={deletePlaylist} clear> <Icon icon={mdiTrashCan} /> </Button>}
                 </h3>
                 <div class="flex-basis-150">
@@ -60,7 +60,7 @@ export const PlaylistSnippetView = (defineComponent({
                     ) : props.snippet.length > 0 ? (
                         <div class="absolute-fill flex row pb-2">
                             {props.snippet.map(track => (
-                                <TrackCard track={track} key={track.id} />
+                                <TrackCard to={`/playlist/${props.playlist.id}?track=${track.id}`} track={track} key={track.id} />
                             ))}
                         </div>
                     ) : (

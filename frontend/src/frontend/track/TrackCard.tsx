@@ -4,12 +4,14 @@ import { Track } from "../../common/Track"
 import { Button } from "../../vue3gui/Button"
 import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
 import { Icon } from "../../vue3gui/Icon"
+import { getIconURL } from "../constants"
 import { TrackView } from "./TrackView"
 
 export const TrackCard = (defineComponent({
     name: "TrackCard",
     props: {
-        track: { type: Track, required: true }
+        track: { type: Track, required: true },
+        to: { type: String }
     },
     setup(props, ctx) {
         const emitter = useDynamicsEmitter()
@@ -25,9 +27,9 @@ export const TrackCard = (defineComponent({
         }
 
         return () => (
-            <Button clear class="flex column text-left gap-1 hover-check">
+            <Button to={props.to} clear class="flex column text-left gap-1 hover-check">
                 <div class="as-track-icon w-150">
-                    <img src={`/icons/${props.track.icon}`} class="img-cover absolute-fill" />
+                    <img src={getIconURL(props.track.icon)} class="img-cover absolute-fill" />
                     <div class="absolute right-0 bottom-0">
                         <Button onClick={editTrack} flat class="bg-black-transparent if-hover-fade" variant="black"> <Icon icon={mdiPencil} /> </Button>
                     </div>

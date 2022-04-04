@@ -9,6 +9,7 @@ import { asyncComputed } from "../vue3gui/util"
 import { PlaylistSnippetView } from "./playlist/PlaylistSnippetView"
 import { STATE } from "./State"
 import { useTrackImporter } from "./track/TrackImporterView"
+import { useTitle } from "./useTitle"
 import icon from "/favicon.ico"
 
 export const HomeScreen = (defineComponent({
@@ -17,6 +18,7 @@ export const HomeScreen = (defineComponent({
         const emitter = useDynamicsEmitter()
         const playlists = computed(() => STATE.playlists.playlists)
         const snippets = asyncComputed(() => { }, () => STATE.playlists.getPlaylistsSnippet(), { persist: true })
+        useTitle("")
 
         const listener = new EventListener()
         onUnmounted(() => listener.dispose())
