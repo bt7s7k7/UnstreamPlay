@@ -75,7 +75,7 @@ export class PlaylistController extends PlaylistContract.defineController() {
 
         this.trackIndex.delete(track.id)
 
-        const index = this.tracks.indexOf(track)
+        const index = this.tracks.findIndex(v => v.id == track.id)
         if (index == -1) throw new Error("Controller does not have a track even though it was indexed")
         this.mutate(v => v.tracks.splice(index, 1))
         this.data.tracks.delete(track.id)
@@ -86,7 +86,7 @@ export class PlaylistController extends PlaylistContract.defineController() {
     public updateTrack(track: Track) {
         if (!this.trackIndex.has(track.id)) return
 
-        const index = this.tracks.indexOf(track)
+        const index = this.tracks.findIndex(v => v.id == track.id)
         if (index == -1) throw new Error("Controller does not have a track even though it was indexed")
         this.mutate(v => v.tracks[index] = track)
 
