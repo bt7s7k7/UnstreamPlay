@@ -25,8 +25,18 @@ export const TrackListEntry = eventDecorator(defineComponent({
         const added = ref(false)
 
         watch(() => props.active, (active) => {
-            if (active) button.value?.$el.scrollIntoView()
-        })
+            if (!active) return
+
+            const target = button.value?.$el as HTMLElement
+            if (!target) return
+            const container = target.parentElement!
+            const targetRect = target.getBoundingClientRect()
+            const containerRect = container.getBoundingClientRect()
+
+            if (targetRect.top < containerRect.top || targetRect.bottom > containerRect.bottom) {
+                container.scrollBy(0, targetRect.top - containerRect.top - containerRect.height / 2 + targetRect.height / 2)
+            }
+        }, { immediate: true })
 
         function edit() {
             emitter.modal(TrackView, {
