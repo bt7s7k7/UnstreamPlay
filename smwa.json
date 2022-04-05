@@ -1,0 +1,8 @@
+{
+    "name": "unstream_play",
+    "scripts": {
+        "start": "yarn start",
+        "update": null
+    },
+    "!version": 0
+}
