@@ -1,5 +1,6 @@
 import { mdiPencil } from "@mdi/js"
 import { defineComponent } from "vue"
+import { useRouter } from "vue-router"
 import { Track } from "../../common/Track"
 import { Button } from "../../vue3gui/Button"
 import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
@@ -15,6 +16,7 @@ export const TrackCard = (defineComponent({
     },
     setup(props, ctx) {
         const emitter = useDynamicsEmitter()
+        const router = useRouter()
 
         async function editTrack() {
             emitter.modal(TrackView, {
@@ -26,8 +28,12 @@ export const TrackCard = (defineComponent({
             })
         }
 
+        function navigate() {
+            if (props.to) router.push(props.to)
+        }
+
         return () => (
-            <Button to={props.to} clear class="flex column text-left gap-1 hover-check">
+            <Button onClick={navigate} clear class="flex column text-left gap-1 hover-check">
                 <div class="as-track-icon w-150">
                     <img src={getIconURL(props.track.icon)} class="img-cover absolute-fill" />
                     <div class="absolute right-0 bottom-0">
