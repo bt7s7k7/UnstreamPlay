@@ -51,6 +51,10 @@ export const TrackImporterScreen = (defineComponent({
             }
         })
 
+        watch(() => trackImporter.value?.downloadedTracks, (tracks) => {
+            if (tracks != null) STATE.onPlaylistsProbablyChanged.emit()
+        })
+
         onMounted(() => {
             setTimeout(() => {
                 downloadOutputView.value?.scroll(0, 1000)
