@@ -1,4 +1,3 @@
-import { logger } from "../../app/app"
 import { DATABASE } from "../../app/DATABASE"
 import { Track } from "../../common/Track"
 import { modify } from "../../comTypes/util"
@@ -13,7 +12,6 @@ export namespace Tracks {
     export function addTrack(track: Track) {
         DATABASE.put("tracks", track)
         onTrackCreated.emit(track)
-        logger.info`Added track ${track}`
     }
 
     export function findTrack(trackID: string) {
