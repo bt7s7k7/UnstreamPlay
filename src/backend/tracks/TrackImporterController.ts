@@ -30,8 +30,8 @@ export class TrackImporterController extends TractImporterContract.defineControl
         const queue: Promise<void>[] = []
         let done = 0
         for (const trackFile of trackFiles) {
+            const write = (msg: string) => this.write(`[IMPORT (${done}/${trackFiles.length})] ${trackFile.name} - ${msg}`)
             queue.push((async () => {
-                const write = (msg: string) => this.write(`[IMPORT (${done}/${trackFiles.length})] ${trackFile.name} - ${msg}`)
 
                 write("Importing: " + trackFile.name)
                 const track = new Track({
@@ -59,7 +59,11 @@ export class TrackImporterController extends TractImporterContract.defineControl
                 tracks.set(track.id, track)
                 done++
                 write(`Done`)
-            })())
+            })().catch(err => {
+                write("Import failed, you can always try again")
+                this.logger.error`${err}`
+                done++
+            }))
         }
         await Promise.all(queue)
 
@@ -70,7 +74,6 @@ export class TrackImporterController extends TractImporterContract.defineControl
 
     protected write(msg: string) {
         if (!this.downloadOutput) throw new Error("Tried to write to output while output not active")
-        this.logger.info`${LogMarker.rawText(msg)}`
         this.mutate(v => v.downloadOutput!.push(msg + "\n"))
     }
 
