@@ -1,9 +1,11 @@
 import { DATABASE } from "../../app/DATABASE"
 import { PlaylistContract, PlaylistData, PlaylistInfo, ROOT_PLAYLIST_ID } from "../../common/Playlist"
 import { Track } from "../../common/Track"
+import { binarySearch } from "../../comTypes/util"
 import { EventEmitter } from "../../eventLib/EventEmitter"
 import { ClientError } from "../../structSync/StructSyncServer"
 import { Tracks } from "../tracks/Tracks"
+import { trackCompare } from "../util"
 import { PlaylistManagerController } from "./PlaylistManagerController"
 
 export class PlaylistController extends PlaylistContract.defineController() {
@@ -63,7 +65,11 @@ export class PlaylistController extends PlaylistContract.defineController() {
     public addTrack(track: Track) {
         if (this.trackIndex.has(track.id)) return
 
-        this.mutate(v => v.tracks.push(track))
+        let index = binarySearch(this.tracks, (a) => trackCompare(track, a))
+        if (index > 0) index = -index
+        index = -index - 1
+
+        this.mutate(v => v.tracks.splice(index, 0, track))
         this.trackIndex.set(track.id, track)
         this.data.tracks.add(track.id)
 
