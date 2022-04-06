@@ -48,7 +48,7 @@ export class TrackImporterController extends TractImporterContract.defineControl
                     if (code == 0) resolve(true)
                     else {
                         this.write("Program error code: " + code)
-                        reject(false)
+                        resolve(false)
                     }
                 })
 
@@ -59,6 +59,7 @@ export class TrackImporterController extends TractImporterContract.defineControl
 
             if (!success) {
                 this.mutate(v => v.isRunning = false)
+                return
             }
         }
 
