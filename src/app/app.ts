@@ -16,6 +16,8 @@ import { StructSyncServer } from "../structSync/StructSyncServer"
 import { StructSyncSession } from "../structSync/StructSyncSession"
 import { ENV } from "./ENV"
 import express = require("express")
+import { DATABASE } from "./DATABASE"
+import { TrackImportSettings } from "../common/Track"
 
 const context = new DIContext()
 export const logger = context.provide(Logger, () => new NodeLogger())
@@ -23,7 +25,7 @@ export const logger = context.provide(Logger, () => new NodeLogger())
 DataPort.init(logger).catch(err => {
     logger.error`${err}`
     process.exit(1)
-}).then(v => {
+}).then(() => {
     logger.info`Config: ${ENV}`
 
     const app = express()
@@ -33,7 +35,7 @@ DataPort.init(logger).catch(err => {
     context.provide(IDProvider, () => new IDProvider.Incremental())
     context.provide(StructSyncServer, "default")
 
-    const trackImporter = context.instantiate(() => TrackImporterController.default().register())
+    const trackImporter = context.instantiate(() => TrackImporterController.make().register())
     const playlistManager = context.instantiate(() => PlaylistManagerController.make().register())
     context.instantiate(() => TrackEditorController.default().register())
 

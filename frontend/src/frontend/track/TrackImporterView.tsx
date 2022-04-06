@@ -1,4 +1,4 @@
-import { mdiCloudDownloadOutline, mdiDownload, mdiPlaylistPlus } from "@mdi/js"
+import { mdiClose, mdiCloudDownloadOutline, mdiDownload, mdiPlaylistPlus, mdiWrench } from "@mdi/js"
 import { defineComponent, nextTick, onMounted, onUnmounted, ref, Transition, watch } from "vue"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { Button } from "../../vue3gui/Button"
@@ -7,6 +7,7 @@ import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
 import { Icon } from "../../vue3gui/Icon"
 import { LoadingIndicator } from "../../vue3gui/LoadingIndicator"
 import { Overlay } from "../../vue3gui/Overlay"
+import { TextField } from "../../vue3gui/TextField"
 import { asyncComputed } from "../../vue3gui/util"
 import { PlaylistInclusionForm } from "../playlist/PlaylistInclusionForm"
 import { STATE } from "../State"
@@ -46,7 +47,7 @@ export const TrackImporterScreen = (defineComponent({
             if (isScrolled) {
                 nextTick(() => {
                     if (!downloadOutputView.value) return
-                    downloadOutputView.value.scroll(0, 1000)
+                    downloadOutputView.value.scroll(0, 10000)
                 })
             }
         })
@@ -57,9 +58,59 @@ export const TrackImporterScreen = (defineComponent({
 
         onMounted(() => {
             setTimeout(() => {
-                downloadOutputView.value?.scroll(0, 1000)
+                downloadOutputView.value?.scroll(0, 10000)
             }, 10)
         })
+
+        async function openSettings(event: MouseEvent) {
+            async function setPlaylist(event: MouseEvent) {
+                const url = ref(trackImporter.value!.settings.youtubeDL ?? "")
+                const popup = await emitter.popup(event.target as HTMLElement, () => (
+                    <TextField focus placeholder="Playlist URL" class="w-200" vModel={url.value} />
+                ), {
+                    align: "over",
+                    props: {
+                        backdropCancels: true
+                    }
+                })
+
+                if (popup && url.value) {
+                    trackImporter.value!.setYoutubeDL({ playlist: url.value })
+                }
+            }
+
+            function removePlaylist() {
+                trackImporter.value!.setYoutubeDL({ playlist: null })
+            }
+
+            emitter.popup(event.target as HTMLElement, () => (
+                <div class="flex column px-2 pt-2 pb-4">
+                    <h3 class="m-0 mb-2">YoutubeDL Integration</h3>
+                    <div class="flex row center-cross mb-1">
+                        {trackImporter.value!.settings.youtubeDL == null ? <>
+                            <small class="mr-2">Playlist:</small>
+                            <Button onClick={setPlaylist} class="flex-fill" variant="success">Activate</Button>
+                        </> : <>
+                            <small>Playlist:</small>
+                            <Button onClick={setPlaylist} clear class="flex-fill overflow-ellipsis nowrap">{trackImporter.value!.settings.youtubeDL}</Button>
+                            <Button onClick={removePlaylist} clear class="text-danger"> <Icon icon={mdiClose} /> </Button>
+                        </>}
+                    </div>
+                    <small class="muted">
+                        Before every import, the system will automatically
+                        download all new tracks in the playlist. Make
+                        sure <code>youtube-dl</code> is on the path, otherwise it will crash.
+                    </small>
+                </div>
+            ), {
+                align: "bottom-left",
+                props: {
+                    cancelButton: "Close",
+                    variant: "black",
+                    class: "w-300"
+                }
+            })
+        }
 
         return () => (
             <Overlay show={trackImporter.loading} variant="clear" class="px-2">{{
@@ -73,6 +124,9 @@ export const TrackImporterScreen = (defineComponent({
                                 Importing...
                             </div>
                         )}
+                        <div class="absolute top-0 right-0">
+                            <Button onClick={openSettings} clear> <Icon icon={mdiWrench} /> </Button>
+                        </div>
                     </div>
                     <Transition name="as-slide-x">
                         {trackImporter.value.downloadedTracks?.size as number > 0 ? (
@@ -91,6 +145,9 @@ export const TrackImporterScreen = (defineComponent({
                         ) : trackImporter.value.downloadOutput ? (
                             <div key="output" class="flex-fill rounded bg-black-transparent">
                                 <pre ref={downloadOutputView} class="absolute-fill scroll m-0 p-2" key="output">{trackImporter.value.downloadOutput.join("")}</pre>
+                                {!trackImporter.value.isRunning && <div class="absolute bottom-0 right-0 p-2">
+                                    <Button onClick={importTracks}>Import again</Button>
+                                </div>}
                             </div>
                         ) : (
                             <div key="initial" class="flex-fill border flex center column rounded">

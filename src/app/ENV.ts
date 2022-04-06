@@ -7,7 +7,8 @@ const BASE_DIR = __filename.endsWith("/index.js") || __filename.endsWith("\\inde
 const Env_t = Type.object({
     PORT: Type.string,
     DATA_PATH: Type.string,
-    API_KEY: Type.string
+    API_KEY: Type.string,
+    YOUTUBE_DL_PATH: Type.string.as(Type.nullable)
 })
 
 dotenv.config({ path: join(BASE_DIR, ".env.local") })

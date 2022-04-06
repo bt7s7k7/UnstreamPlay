@@ -11,12 +11,18 @@ export class Track extends Struct.define("Track", {
     url: Type.string
 }) { }
 
+export class TrackImportSettings extends Struct.define("TrackImportSettings", {
+    youtubeDL: Type.string.as(Type.nullable)
+}) { }
+
 export const TractImporterContract = StructSyncContract.define(class TractImporter extends Struct.define("TractImporter", {
     isRunning: Type.boolean,
     downloadOutput: Type.string.as(Type.array).as(Type.nullable),
-    downloadedTracks: Track.ref().as(Type.map).as(Type.nullable)
+    downloadedTracks: Track.ref().as(Type.map).as(Type.nullable),
+    settings: TrackImportSettings.ref()
 }) { }, {
-    importTracks: ActionType.define("importTracks", Type.empty, Type.empty)
+    importTracks: ActionType.define("importTracks", Type.empty, Type.empty),
+    setYoutubeDL: ActionType.define("setYoutubeDL", Type.object({ playlist: Type.string.as(Type.nullable) }), Type.empty)
 })
 
 export const TrackEditorContract = StructSyncContract.define(class TrackEditor extends Struct.define("TrackEditor", {}) { }, {

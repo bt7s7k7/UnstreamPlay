@@ -1,8 +1,10 @@
+import { spawn } from "child_process"
+import { DATABASE } from "../../app/DATABASE"
+import { ENV } from "../../app/ENV"
 import { Track, TractImporterContract } from "../../common/Track"
 import { makeRandomID } from "../../comTypes/util"
 import { DIContext } from "../../dependencyInjection/DIContext"
 import { Logger } from "../../logger/Logger"
-import { LogMarker } from "../../logger/ObjectDescription"
 import { DataPort } from "../DataPort"
 import { Tracks } from "./Tracks"
 import { YoutubeAdapter } from "./YoutubeAdapter"
@@ -13,6 +15,10 @@ export class TrackImporterController extends TractImporterContract.defineControl
     public impl = super.impl({
         importTracks: async () => {
             this.importTracks()
+        },
+        setYoutubeDL: async ({ playlist }) => {
+            this.mutate(v => v.settings.youtubeDL = playlist)
+            DATABASE.setDirty()
         }
     })
 
@@ -20,6 +26,41 @@ export class TrackImporterController extends TractImporterContract.defineControl
         this.mutate(v => v.isRunning = true)
         this.mutate(v => v.downloadOutput = [])
         this.mutate(v => v.downloadedTracks = null)
+
+        if (this.settings.youtubeDL) {
+            this.write("YoutubeDL is enabled, downloading...")
+            const success = await new Promise<boolean>((resolve, reject) => {
+                const dl = spawn(ENV.YOUTUBE_DL_PATH ?? "youtube-dl", ["-x", this.settings.youtubeDL!, "--download-archive=archive"], {
+                    shell: true,
+                    stdio: "pipe",
+                    cwd: DataPort.getImportFolder()
+                })
+
+                dl.stdout.on("data", (chunk) => {
+                    this.write(chunk.toString())
+                })
+
+                dl.stderr.on("data", (chunk) => {
+                    this.write(chunk.toString())
+                })
+
+                dl.on("exit", (code) => {
+                    if (code == 0) resolve(true)
+                    else {
+                        this.write("Program error code: " + code)
+                        reject(false)
+                    }
+                })
+
+                dl.on("error", (err) => {
+                    this.logger.error`${err}`
+                })
+            })
+
+            if (!success) {
+                this.mutate(v => v.isRunning = false)
+            }
+        }
 
         this.write("Reading tracks...")
         const trackFiles = await DataPort.getTracksToImport()
@@ -79,6 +120,13 @@ export class TrackImporterController extends TractImporterContract.defineControl
 
     public static make() {
         const controller = TrackImporterController.default()
+        const settings = DATABASE.tryGet("trackImportSettings")
+        if (settings) {
+            controller.settings = settings
+        } else {
+            DATABASE.put("trackImportSettings", controller.settings)
+        }
+
         Tracks.onTrackDeleted.add(controller, (track) => {
             if (!controller.downloadedTracks?.has(track.id)) return
             controller.mutate(v => v.downloadedTracks!.delete(track.id))
@@ -88,5 +136,7 @@ export class TrackImporterController extends TractImporterContract.defineControl
             if (!controller.downloadedTracks?.has(track.id)) return
             controller.mutate(v => v.downloadedTracks!.set(track.id, track))
         })
+
+        return controller
     }
 }

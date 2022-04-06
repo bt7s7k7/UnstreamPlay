@@ -82,6 +82,10 @@ export namespace DataPort {
         return iconsPath
     }
 
+    export function getImportFolder() {
+        return importPath
+    }
+
     export async function deleteTrackData(track: Track) {
         if (track.icon) {
             await rm(join(iconsPath, track.icon))
