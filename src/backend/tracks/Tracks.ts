@@ -28,4 +28,8 @@ export namespace Tracks {
         DataPort.deleteTrackData(track)
         onTrackDeleted.emit(track)
     }
+
+    export function listTracks() {
+        return DATABASE.list("tracks")
+    }
 }

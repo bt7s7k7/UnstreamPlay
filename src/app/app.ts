@@ -3,6 +3,7 @@ import { join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
 import { DataPort } from "../backend/DataPort"
+import { exportTracks } from "../backend/exportTracks"
 import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
 import { TrackEditorController } from "../backend/tracks/TrackEditorController"
 import { TrackImporterController } from "../backend/tracks/TrackImporterController"
@@ -16,8 +17,6 @@ import { StructSyncServer } from "../structSync/StructSyncServer"
 import { StructSyncSession } from "../structSync/StructSyncSession"
 import { ENV } from "./ENV"
 import express = require("express")
-import { DATABASE } from "./DATABASE"
-import { TrackImportSettings } from "../common/Track"
 
 const context = new DIContext()
 export const logger = context.provide(Logger, () => new NodeLogger())
@@ -74,6 +73,9 @@ DataPort.init(logger).catch(err => {
             trackImporter.importTracks()
         } else if (command == "reset") {
             DataPort.deleteEverything().then(() => process.exit(0))
+        } else if (command == "export") {
+            const [path] = args
+            exportTracks(path, logger)
         } else {
             logger.error`Unknown command`
         }
