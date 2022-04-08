@@ -59,6 +59,25 @@ export class PlaylistController extends PlaylistContract.defineController() {
             this.data.label = label
             this.onInfoChanged.emit(this.getInfo())
             DATABASE.setDirty()
+        },
+        copyTracksFrom: async ({ playlist }) => {
+            if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot copy tracks into the root playlist")
+
+            const controller = this.manager.playlistControllers.get(playlist)
+            if (!controller) throw new ClientError("Specified playlist does not exist")
+
+            for (const track of controller.tracks) {
+                if (!this.trackIndex.has(track.id)) {
+                    this.addTrack(track)
+                }
+            }
+        },
+        removeAllTracks: async () => {
+            if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot remove tracks from the root playlist")
+
+            for (let i = this.tracks.length - 1; i >= 0; i--) {
+                this.removeTrack(this.tracks[i])
+            }
         }
     })
 

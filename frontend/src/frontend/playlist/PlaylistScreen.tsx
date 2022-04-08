@@ -1,4 +1,4 @@
-import { mdiDownload, mdiMagnify, mdiPlaylistMusic, mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
+import { mdiContentCopy, mdiDownload, mdiMagnify, mdiPlaylistMusic, mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
 import { computed, defineComponent, onMounted, onUnmounted, ref, toRaw, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ROOT_PLAYLIST_ID } from "../../common/Playlist"
@@ -17,6 +17,7 @@ import { useTrackImporter } from "../track/TrackImporterView"
 import { TrackListEntry } from "../track/TrackListEntry"
 import { TrackView } from "../track/TrackView"
 import { useTitle } from "../useTitle"
+import { PlaylistEditor } from "./PlaylistEditor"
 
 export const PlaylistScreen = (defineComponent({
     name: "PlaylistScreen",
@@ -145,6 +146,17 @@ export const PlaylistScreen = (defineComponent({
             await playlist.value.removeTrack({ track: track.id })
         }
 
+        function openPlaylistEditor() {
+            emitter.modal(PlaylistEditor, {
+                contentProps: {
+                    playlist: playlist.value
+                },
+                props: {
+                    cancelButton: "Close",
+                    class: "w-300 h-500"
+                }
+            })
+        }
 
         return () => (
             <Overlay class="flex-fill flex row" show={playlist.value == null}>{{
@@ -173,6 +185,11 @@ export const PlaylistScreen = (defineComponent({
                                     {playlist.value?.label}
                                 </h3>
                             </Button>
+                            {params.value.playlistID != ROOT_PLAYLIST_ID && <Button onClick={openPlaylistEditor} clear class="p-2">
+                                <h3 class="m-0">
+                                    <Icon icon={mdiContentCopy} />
+                                </h3>
+                            </Button>}
                             <Button onClick={openTrackImporter} clear class="p-2">
                                 <h3 class="m-0">
                                     <Icon icon={mdiDownload} />

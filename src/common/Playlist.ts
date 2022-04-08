@@ -25,7 +25,9 @@ export const PlaylistContract = StructSyncContract.define(class Playlist extends
 }, {
     removeTrack: ActionType.define("removeTrack", Type.object({ track: Type.string }), Type.empty),
     addTrack: ActionType.define("addTrack", Type.object({ track: Type.string }), Type.empty),
-    setLabel: ActionType.define("setLabel", Type.object({ label: Type.string }), Type.empty)
+    setLabel: ActionType.define("setLabel", Type.object({ label: Type.string }), Type.empty),
+    copyTracksFrom: ActionType.define("copyTracksFrom", Type.object({ playlist: Type.string }), Type.empty),
+    removeAllTracks: ActionType.define("removeAllTracks", Type.empty, Type.empty)
 })
 
 export const PlaylistManagerContract = StructSyncContract.define(class PlaylistManager extends Struct.define("PlaylistManager", {
