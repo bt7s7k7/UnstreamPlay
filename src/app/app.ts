@@ -1,5 +1,6 @@
+import { renameSync } from "fs"
 import { createServer } from "http"
-import { join } from "path"
+import { extname, join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
 import { DataPort } from "../backend/DataPort"
@@ -7,6 +8,8 @@ import { exportTracks } from "../backend/exportTracks"
 import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
 import { TrackEditorController } from "../backend/tracks/TrackEditorController"
 import { TrackImporterController } from "../backend/tracks/TrackImporterController"
+import { Tracks } from "../backend/tracks/Tracks"
+import { getSafeTrackFileName } from "../backend/util"
 import { stringifyAddress } from "../comTypes/util"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
 import { MessageBridge } from "../dependencyInjection/commonServices/MessageBridge"
@@ -76,6 +79,16 @@ DataPort.init(logger).catch(err => {
         } else if (command == "export") {
             const [path] = args
             exportTracks(path, logger)
+        } else if (command == "name_tracks") {
+            const trackFolder = DataPort.getTracksFolder()
+
+            for (const track of Tracks.listTracks()) {
+                const oldFilename = track.url
+                const ext = extname(oldFilename)
+                const newFilename = getSafeTrackFileName(track) + "_" + track.id + ext
+                renameSync(join(trackFolder, oldFilename), join(trackFolder, newFilename))
+                Tracks.updateTrack(track, { url: newFilename })
+            }
         } else {
             logger.error`Unknown command`
         }

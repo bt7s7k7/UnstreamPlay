@@ -5,6 +5,7 @@ import { Logger } from "../logger/Logger"
 import { LogMarker } from "../logger/ObjectDescription"
 import { DataPort } from "./DataPort"
 import { Tracks } from "./tracks/Tracks"
+import { getSafeTrackFileName } from "./util"
 
 export async function exportTracks(path: string, logger: Logger) {
     const queue: Promise<void>[] = []
@@ -28,8 +29,7 @@ export async function exportTracks(path: string, logger: Logger) {
             if (!track.url) return
 
             const extension = extname(track.url)
-            const targetName = `${track.author} - ${track.label}`
-                .replace(/["/\\[\]:;|,*?]/g, "_")
+            const targetName = getSafeTrackFileName(track)
                 + extension
             if (existing.has(targetName)) return
 

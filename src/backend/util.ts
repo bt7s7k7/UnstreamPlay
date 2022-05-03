@@ -8,3 +8,8 @@ export function trackCompare(a: Track, b: Track) {
     const labelCompare = collator.compare(a.label.toLowerCase(), b.label.toLowerCase())
     return labelCompare
 }
+
+export function getSafeTrackFileName(track: Track) {
+    return `${track.author} - ${track.label}`
+        .replace(/["/\\[\]:;|,*?]/g, "_")
+}

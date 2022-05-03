@@ -6,6 +6,7 @@ import { makeRandomID } from "../../comTypes/util"
 import { DIContext } from "../../dependencyInjection/DIContext"
 import { Logger } from "../../logger/Logger"
 import { DataPort } from "../DataPort"
+import { getSafeTrackFileName } from "../util"
 import { Tracks } from "./Tracks"
 import { YoutubeAdapter } from "./YoutubeAdapter"
 
@@ -96,7 +97,7 @@ export class TrackImporterController extends TractImporterContract.defineControl
                     }
                 }
 
-                track.url = await trackFile.import(track.id)
+                track.url = await trackFile.import(getSafeTrackFileName(track) + "_" + track.id)
                 Tracks.addTrack(track)
                 tracks.set(track.id, track)
                 done++
