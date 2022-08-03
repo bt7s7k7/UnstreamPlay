@@ -47,7 +47,7 @@ export const TrackImporterScreen = (defineComponent({
             if (isScrolled) {
                 nextTick(() => {
                     if (!downloadOutputView.value) return
-                    downloadOutputView.value.scroll(0, 10000)
+                    downloadOutputView.value.scrollBy(0, 10000)
                 })
             }
         })
@@ -58,7 +58,7 @@ export const TrackImporterScreen = (defineComponent({
 
         onMounted(() => {
             setTimeout(() => {
-                downloadOutputView.value?.scroll(0, 10000)
+                downloadOutputView.value?.scrollBy(0, 10000)
             }, 10)
         })
 
