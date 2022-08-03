@@ -17,8 +17,8 @@ export class TrackImporterController extends TractImporterContract.defineControl
         importTracks: async () => {
             this.importTracks()
         },
-        setYoutubeDL: async ({ playlist }) => {
-            this.mutate(v => v.settings.youtubeDL = playlist)
+        setPlaylist: async ({ playlist }) => {
+            this.mutate(v => v.settings.playlist = playlist)
             DATABASE.setDirty()
         }
     })
@@ -28,10 +28,17 @@ export class TrackImporterController extends TractImporterContract.defineControl
         this.mutate(v => v.downloadOutput = [])
         this.mutate(v => v.downloadedTracks = null)
 
-        if (this.settings.youtubeDL) {
-            this.write("YoutubeDL is enabled, downloading...")
+        if (this.settings.playlist) {
+            this.write("Downloader is enabled, starting...")
             const success = await new Promise<boolean>((resolve, reject) => {
-                const dl = spawn(ENV.YOUTUBE_DL_PATH ?? "youtube-dl", ["-x", this.settings.youtubeDL!, "--download-archive=archive"], {
+                const type = ENV.DOWNLOADER_TYPE ?? "yt-dlp"
+                const path = ENV.DOWNLOADER_PATH ?? type
+
+                const args = ["-x", this.settings.playlist!, "--download-archive=archive"]
+                if (type == "yt-dlp") {
+                    args.push("--compat-options", "no-youtube-unavailable-videos")
+                }
+                const dl = spawn(path, args, {
                     shell: true,
                     stdio: "pipe",
                     cwd: DataPort.getImportFolder()
@@ -117,6 +124,22 @@ export class TrackImporterController extends TractImporterContract.defineControl
 
     protected write(msg: string) {
         if (!this.downloadOutput) throw new Error("Tried to write to output while output not active")
+        const lastIndex = this.downloadOutput.length - 1
+        const last = this.downloadOutput[lastIndex]
+        if (last) {
+            const startRegex = /^(.*?)[\d.]+%/m
+            const lastMatch = last.trim().match(startRegex)
+            const currMatch = msg.trim().match(startRegex)
+            if (lastMatch != null && currMatch != null) {
+                const lastStart = lastMatch[1]!
+                const currStart = currMatch[1]!
+                if (lastStart == currStart) {
+                    this.mutate(v => v.downloadOutput![lastIndex] = msg)
+                    return
+                }
+            }
+        }
+
         this.mutate(v => v.downloadOutput!.push(msg + "\n"))
     }
 

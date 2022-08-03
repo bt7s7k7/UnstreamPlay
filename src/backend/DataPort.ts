@@ -47,7 +47,9 @@ export namespace DataPort {
             const path = join(importPath, file.name)
             const { name: stem, ext } = parse(path)
             if (!TRACK_EXTS.has(ext)) continue
-            const matches = stem.match(/^(.*?)-([A-Za-z0-9-_]+)$/)
+            const regex = ENV.DOWNLOADER_TYPE == "youtube-dl" ? /^(.*?)-([A-Za-z0-9-_]+)$/ : /^(.*?) \[([A-Za-z0-9-_]+)\]$/
+
+            const matches = stem.match(regex)
             const name = matches?.[1] ?? stem
             const id = matches?.[2] ?? null
 

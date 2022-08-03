@@ -12,7 +12,7 @@ export class Track extends Struct.define("Track", {
 }) { }
 
 export class TrackImportSettings extends Struct.define("TrackImportSettings", {
-    youtubeDL: Type.string.as(Type.nullable)
+    playlist: Type.string.as(Type.nullable)
 }) { }
 
 export const TractImporterContract = StructSyncContract.define(class TractImporter extends Struct.define("TractImporter", {
@@ -22,7 +22,7 @@ export const TractImporterContract = StructSyncContract.define(class TractImport
     settings: TrackImportSettings.ref()
 }) { }, {
     importTracks: ActionType.define("importTracks", Type.empty, Type.empty),
-    setYoutubeDL: ActionType.define("setYoutubeDL", Type.object({ playlist: Type.string.as(Type.nullable) }), Type.empty)
+    setPlaylist: ActionType.define("setPlaylist", Type.object({ playlist: Type.string.as(Type.nullable) }), Type.empty)
 })
 
 export const TrackEditorContract = StructSyncContract.define(class TrackEditor extends Struct.define("TrackEditor", {}) { }, {

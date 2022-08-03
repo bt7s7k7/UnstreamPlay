@@ -64,7 +64,7 @@ export const TrackImporterScreen = (defineComponent({
 
         async function openSettings(event: MouseEvent) {
             async function setPlaylist(event: MouseEvent) {
-                const url = ref(trackImporter.value!.settings.youtubeDL ?? "")
+                const url = ref(trackImporter.value!.settings.playlist ?? "")
                 const popup = await emitter.popup(event.target as HTMLElement, () => (
                     <TextField focus placeholder="Playlist URL" class="w-200" vModel={url.value} />
                 ), {
@@ -75,31 +75,33 @@ export const TrackImporterScreen = (defineComponent({
                 })
 
                 if (popup && url.value) {
-                    trackImporter.value!.setYoutubeDL({ playlist: url.value })
+                    trackImporter.value!.setPlaylist({ playlist: url.value })
                 }
             }
 
             function removePlaylist() {
-                trackImporter.value!.setYoutubeDL({ playlist: null })
+                trackImporter.value!.setPlaylist({ playlist: null })
             }
 
             emitter.popup(event.target as HTMLElement, () => (
                 <div class="flex column px-2 pt-2 pb-4">
-                    <h3 class="m-0 mb-2">YoutubeDL Integration</h3>
+                    <h3 class="m-0 mb-2">Downloader Integration</h3>
                     <div class="flex row center-cross mb-1">
-                        {trackImporter.value!.settings.youtubeDL == null ? <>
+                        {trackImporter.value!.settings.playlist == null ? <>
                             <small class="mr-2">Playlist:</small>
                             <Button onClick={setPlaylist} class="flex-fill" variant="success">Activate</Button>
                         </> : <>
                             <small>Playlist:</small>
-                            <Button onClick={setPlaylist} clear class="flex-fill overflow-ellipsis nowrap">{trackImporter.value!.settings.youtubeDL}</Button>
+                            <Button onClick={setPlaylist} clear class="flex-fill overflow-ellipsis nowrap">{trackImporter.value!.settings.playlist}</Button>
                             <Button onClick={removePlaylist} clear class="text-danger"> <Icon icon={mdiClose} /> </Button>
                         </>}
                     </div>
                     <small class="muted">
                         Before every import, the system will automatically
-                        download all new tracks in the playlist. Make
-                        sure <code>youtube-dl</code> is on the path, otherwise it will crash.
+                        download all new tracks in the playlist. Path to
+                        the downloader program is set using the <code>DOWNLOADER_PATH</code>
+                        env variable and the type is set using <code>DOWNLOADER_TYPE</code>,
+                        which can be either <code>"youtube-dl" | "yt-dlp"</code>
                     </small>
                 </div>
             ), {
@@ -170,7 +172,7 @@ export function useTrackImporter() {
         return emitter.modal(TrackImporterScreen, {
             props: {
                 cancelButton: "Close",
-                class: "as-h-modal"
+                class: "as-h-modal as-page"
             },
             contentProps: {
                 class: "as-page flex column flex-fill gap-2"

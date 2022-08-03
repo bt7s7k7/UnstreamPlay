@@ -8,7 +8,8 @@ const Env_t = Type.object({
     PORT: Type.string,
     DATA_PATH: Type.string,
     API_KEY: Type.string,
-    YOUTUBE_DL_PATH: Type.string.as(Type.nullable)
+    DOWNLOADER_PATH: Type.string.as(Type.nullable),
+    DOWNLOADER_TYPE: Type.enum("youtube-dl", "yt-dlp").as(Type.nullable)
 })
 
 dotenv.config({ path: join(BASE_DIR, ".env.local") })
