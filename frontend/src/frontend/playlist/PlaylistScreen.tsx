@@ -159,10 +159,10 @@ export const PlaylistScreen = (defineComponent({
         }
 
         return () => (
-            <Overlay class="flex-fill flex row" show={playlist.value == null}>{{
+            <Overlay class="flex-fill flex as-playlist-screen" show={playlist.value == null}>{{
                 overlay: () => <LoadingIndicator />,
                 default: () => <>
-                    <div class="flex-basis-500 flex column">
+                    <div class="panel flex column">
                         <TrackView track={selectedTrack.value ?? undefined}>
                             <div class="flex row center-cross">
                                 <div class="flex-fill as-audio-wrapper">

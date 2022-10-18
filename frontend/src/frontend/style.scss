@@ -10,6 +10,7 @@
 .as-track-icon {
     aspect-ratio: 1.8021265092809517;
     /* 0.5549; */
+    max-width: 500px;
     object-fit: cover;
 }
 
@@ -28,5 +29,23 @@ audio::-webkit-media-controls-panel {
         position: relative;
         left: -25px;
         outline: none;
+    }
+}
+
+.as-playlist-screen {
+    flex-direction: row;
+
+    .panel {
+        flex-basis: 500px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .as-playlist-screen {
+        flex-direction: column;
+
+        .panel {
+            flex-basis: 400px;
+        }
     }
 }

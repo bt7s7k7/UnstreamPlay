@@ -69,8 +69,10 @@ export const TrackView = (defineComponent({
 
         return () => (
             <div class="flex column">
-                <div class="as-track-icon w-fill">
-                    <img src={getIconURL(props.track?.icon)} class="absolute-fill img-cover bg-black" />
+                <div class="w-fill flex column center bg-black">
+                    <div class="as-track-icon w-fill">
+                        <img src={getIconURL(props.track?.icon)} class="absolute-fill img-cover bg-black" />
+                    </div>
                 </div>
                 {ctx.slots.default ? ctx.slots.default?.() : <div class="mt-4"></div>}
                 {props.track != null && (
