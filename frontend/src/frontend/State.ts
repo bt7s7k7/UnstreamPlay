@@ -9,6 +9,7 @@ import { EventListener } from "../eventLib/EventListener"
 import { StructSyncClient } from "../structSync/StructSyncClient"
 import { PlaylistManagerProxy } from "./playlist/PlaylistManagerProxy"
 import { PlaylistProxy } from "./playlist/PlaylistProxy"
+import { SpeakerManagerProxy } from "./speaker/SpeakerManagerProxy"
 import { TrackEditorProxy } from "./track/TrackEditorProxy"
 import { TrackImporterProxy } from "./track/TrackImporterProxy"
 
@@ -20,6 +21,7 @@ class State extends EventListener {
     public readonly context: DIContext = null!
     public readonly playlists: PlaylistManagerProxy = null!
     public readonly trackEditor: TrackEditorProxy = null!
+    public readonly speakerManager: SpeakerManagerProxy = null!
     public lastAddedPlaylist: string | null = null
 
     protected init() {
@@ -42,10 +44,12 @@ class State extends EventListener {
 
         const playlists = context.instantiate(() => PlaylistManagerProxy.default())
         const trackEditor = context.instantiate(() => TrackEditorProxy.default())
+        const speakerManager = context.instantiate(() => SpeakerManagerProxy.default())
 
-        modify(this as State, { context, playlists, trackEditor })
+        modify(this as State, { context, playlists, trackEditor, speakerManager })
 
         this.playlists.synchronize()
+        this.speakerManager.synchronize()
 
         this.ready = true
     }

@@ -6,6 +6,7 @@ import { Server } from "socket.io"
 import { DataPort } from "../backend/DataPort"
 import { exportTracks } from "../backend/exportTracks"
 import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
+import { SpeakerManagerController } from "../backend/SpeakerManagerController"
 import { TrackEditorController } from "../backend/tracks/TrackEditorController"
 import { TrackImporterController } from "../backend/tracks/TrackImporterController"
 import { Tracks } from "../backend/tracks/Tracks"
@@ -39,6 +40,7 @@ DataPort.init(logger).catch(err => {
 
     const trackImporter = context.instantiate(() => TrackImporterController.make().register())
     const playlistManager = context.instantiate(() => PlaylistManagerController.make().register())
+    const speakerManager = context.instantiate(() => SpeakerManagerController.default().register())
     context.instantiate(() => TrackEditorController.default().register())
 
     playlistManager.trackImporter = trackImporter
@@ -51,6 +53,7 @@ DataPort.init(logger).catch(err => {
         session.onError.add(null, (error) => logger.error`${error}`)
 
         socket.on("disconnect", () => {
+            speakerManager.setSessionSpeakerState(session, null)
             sessionContext.dispose()
         })
     })
@@ -88,6 +91,10 @@ DataPort.init(logger).catch(err => {
                 const newFilename = getSafeTrackFileName(track) + "_" + track.id + ext
                 renameSync(join(trackFolder, oldFilename), join(trackFolder, newFilename))
                 Tracks.updateTrack(track, { url: newFilename })
+            }
+        } else if (command == "speakers") {
+            for (const [id, label] of speakerManager.speakers) {
+                logger.info`${id}: ${label}`
             }
         } else {
             logger.error`Unknown command`

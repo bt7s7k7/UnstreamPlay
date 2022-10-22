@@ -2,6 +2,7 @@ import { h } from "vue"
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router"
 import { HomeScreen } from "../frontend/HomeScreen"
 import { PlaylistScreen } from "../frontend/playlist/PlaylistScreen"
+import { SpeakerScreen } from "../frontend/speaker/SpeakerScreen"
 import { useTitle } from "../frontend/useTitle"
 
 const routes: RouteRecordRaw[] = [
@@ -9,6 +10,11 @@ const routes: RouteRecordRaw[] = [
         name: "Home",
         component: HomeScreen,
         path: "/"
+    },
+    {
+        name: "Speaker",
+        component: SpeakerScreen,
+        path: "/speaker"
     },
     {
         name: "Playlist",
