@@ -1,5 +1,6 @@
 import { renameSync } from "fs"
 import { createServer } from "http"
+import { verify as verifyToken } from "jsonwebtoken"
 import { extname, join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
@@ -44,6 +45,23 @@ DataPort.init(logger).catch(err => {
     context.instantiate(() => TrackEditorController.default().register())
 
     playlistManager.trackImporter = trackImporter
+
+    if (ENV.SMWA_KEY) {
+        const key = Buffer.from(ENV.SMWA_KEY, "base64")
+        io.use(async (socket, next) => {
+            const token = socket.handshake.auth.token
+            const payload = await new Promise<any>((resolve, reject) => verifyToken(
+                token, key, {},
+                (err: any, payload: any) => err ? reject(err) : resolve(payload!))
+            ).catch(() => null)
+
+            if (payload == null || payload.iss != "smwa") {
+                next(new Error("Auth required;" + ENV.SMWA_URL))
+            } else {
+                next()
+            }
+        })
+    }
 
     io.on("connect", (socket) => {
         const sessionContext = new DIContext(context)

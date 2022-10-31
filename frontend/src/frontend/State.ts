@@ -1,4 +1,4 @@
-import { io } from "socket.io-client"
+import { io, SocketOptions } from "socket.io-client"
 import { markRaw, reactive } from "vue"
 import { modify } from "../comTypes/util"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
@@ -7,6 +7,7 @@ import { DIContext } from "../dependencyInjection/DIContext"
 import { EventEmitter } from "../eventLib/EventEmitter"
 import { EventListener } from "../eventLib/EventListener"
 import { StructSyncClient } from "../structSync/StructSyncClient"
+import { stringifyError } from "../vue3gui/util"
 import { PlaylistManagerProxy } from "./playlist/PlaylistManagerProxy"
 import { PlaylistProxy } from "./playlist/PlaylistProxy"
 import { SpeakerManagerProxy } from "./speaker/SpeakerManagerProxy"
@@ -25,13 +26,32 @@ class State extends EventListener {
     public lastAddedPlaylist: string | null = null
 
     protected init() {
-        const socket = markRaw(io())
+        let options: SocketOptions | undefined = undefined
+        const key = new URL(location.href).searchParams.get("key")
+        if (key) {
+            options = {
+                auth: {
+                    token: key
+                }
+            }
+        }
+
+        const socket = markRaw(io(options))
         socket.on("connect", () => {
             this.connected = true
         })
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", (reason) => {
             this.connected = false
+        })
+
+        socket.on("connect_error", (err) => {
+            const text = stringifyError(err)
+            if (text.startsWith("Auth required")) {
+                const url = new URL(text.split(";")[1])
+                url.searchParams.set("redirect", location.href)
+                location.href = url.href
+            }
         })
 
         const context = new DIContext(this.context)

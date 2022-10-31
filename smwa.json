@@ -4,5 +4,6 @@
         "start": "yarn start",
         "update": null
     },
+    "authSupport": true,
     "!version": 0
 }
