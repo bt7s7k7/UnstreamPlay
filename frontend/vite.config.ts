@@ -14,6 +14,7 @@ export default defineConfig(() => {
             proxy: {
                 "^/(api|socket\\.io|icons|tracks)": { target: process.env.BACKEND_URL, changeOrigin: true, ws: true },
             }
-        }
+        },
+        base: process.env.BASE_URL
     }
 })
