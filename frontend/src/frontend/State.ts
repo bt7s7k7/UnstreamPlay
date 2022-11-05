@@ -37,7 +37,7 @@ class State extends EventListener {
         }
 
         const socket = markRaw(io({
-            path: import.meta.env.BASE_URL ? import.meta.env.BASE_URL + "/socket.io" : undefined,
+            path: import.meta.env.BASE_URL != "/" ? import.meta.env.BASE_URL + "/socket.io" : undefined,
             ...options
         }))
         socket.on("connect", () => {
