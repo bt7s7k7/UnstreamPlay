@@ -1,5 +1,5 @@
 import { mdiPencil, mdiPlaylistPlus, mdiTrashCan } from "@mdi/js"
-import { ComponentPublicInstance, defineComponent, ref, watch } from "vue"
+import { ComponentPublicInstance, defineComponent, getCurrentInstance, onMounted, ref, watch } from "vue"
 import { Track } from "../../common/Track"
 import { eventDecorator } from "../../eventDecorator"
 import { Button } from "../../vue3gui/Button"
@@ -12,10 +12,11 @@ export const TrackListEntry = eventDecorator(defineComponent({
     name: "TrackListEntry",
     props: {
         track: { type: Track, required: true },
-        active: { type: Boolean }
+        active: { type: Boolean },
+        noRemoveButton: { type: Boolean }
     },
     emits: {
-        click: () => true,
+        click: (event: MouseEvent) => true,
         remove: () => true
     },
     setup(props, ctx) {
@@ -55,7 +56,7 @@ export const TrackListEntry = eventDecorator(defineComponent({
         }
 
         return () => (
-            <Button onClick={() => ctx.emit("click")} clear={!props.active} variant={props.active ? "primary" : undefined} class="flex row p-1 gap-1 text-left center-cross hover-check" ref={button}>
+            <Button onClick={(event) => ctx.emit("click", event)} clear={!props.active} variant={props.active ? "primary" : undefined} class="flex row p-1 gap-1 text-left center-cross hover-check" ref={button}>
                 <div class="flex column gap-1 flex-fill">
                     <div>{props.track.label}</div>
                     <small>{props.track.author}</small>
@@ -63,7 +64,7 @@ export const TrackListEntry = eventDecorator(defineComponent({
                 <div onMouseleave={() => added.value = false}>
                     {STATE.lastAddedPlaylist && <Button onClick={addToLast} class="if-hover-fade" clear={!added.value} variant={added.value ? "success" : undefined}> <Icon icon={mdiPlaylistPlus} /> </Button>}
                     <Button onClick={edit} class="if-hover-fade" clear> <Icon icon={mdiPencil} /> </Button>
-                    <Button onClick={() => ctx.emit("remove")} class="if-hover-fade" clear> <Icon icon={mdiTrashCan} /> </Button>
+                    {!props.noRemoveButton && <Button onClick={() => ctx.emit("remove")} class="if-hover-fade" clear> <Icon icon={mdiTrashCan} /> </Button>}
                 </div>
             </Button>
         )

@@ -34,7 +34,7 @@ export const PlaylistScreen = (defineComponent({
             track: route.query.track as string | null
         }))
 
-        const { playlist, selectedTrackID, playbackType, selectedTrack, nextTrack, selectTrack } = usePlaylist(computed(() => params.value.playlistID))
+        const { playlist, selectedTrackID, playbackType, selectedTrack, nextTrack, selectTrack, queuedTrack, selectQueuedTrack } = usePlaylist(computed(() => params.value.playlistID))
 
         const searchQuery = ref("")
         const searchQueryDebounced = useDebounce(searchQuery, { delay: 100 })
@@ -114,6 +114,8 @@ export const PlaylistScreen = (defineComponent({
                             onNextTrack={nextTrack}
                             onSelectTrack={selectTrack}
                             onPlaybackTypeChange={v => playbackType.value = v}
+                            queuedTrack={queuedTrack.value ?? undefined}
+                            onQueuedTrackChange={v => selectQueuedTrack(v)}
                         />
                     </div>
                     <div class="flex-fill flex column">
@@ -162,7 +164,7 @@ export const PlaylistScreen = (defineComponent({
                                 {tracks.value.map(track => (
                                     <TrackListEntry
                                         onRemove={() => removeTrack(track)}
-                                        onClick={() => selectTrack(track.id)}
+                                        onClick={(event) => event.shiftKey ? selectQueuedTrack(track.id) : selectTrack(track.id)}
                                         key={track.id}
                                         active={track.id == selectedTrackID.value}
                                         class="w-fill p-2"

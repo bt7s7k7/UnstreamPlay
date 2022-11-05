@@ -7,9 +7,10 @@ import { StructSyncContract } from "../structSync/StructSyncContract"
 export class SpeakerSync extends Struct.define("SpeakerSync", {
     playlist: Type.string,
     track: Type.string,
+    queuedTrack: Type.string.as(Type.nullable),
     time: Type.number,
     playback: Type.enum("shuffle", "linear"),
-    playing: Type.boolean
+    playing: Type.boolean,
 }) { }
 
 export const SpeakerCommand_t = Type.keyValuePair(SpeakerSync.baseType)

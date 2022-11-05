@@ -9,6 +9,7 @@ import { useEventListener } from "../../vue3gui/util"
 import { getIconURL, getTrackURL } from "../constants"
 import { PlaybackType } from "../playlist/usePlaylist"
 import { STATE } from "../State"
+import { TrackListEntry } from "./TrackListEntry"
 import { TrackView } from "./TrackView"
 
 export const TrackPlayer = eventDecorator(defineComponent({
@@ -17,12 +18,14 @@ export const TrackPlayer = eventDecorator(defineComponent({
         selectedTrack: { type: Track },
         playbackType: { type: String as PropType<PlaybackType>, required: true },
         playlistID: { type: String },
-        authoritative: { type: Boolean }
+        authoritative: { type: Boolean },
+        queuedTrack: { type: Track }
     },
     emits: {
         nextTrack: () => true,
         selectTrack: (id: string) => true,
-        playbackTypeChange: (type: PlaybackType) => true
+        playbackTypeChange: (type: PlaybackType) => true,
+        queuedTrackChange: (id: string | null) => true
     },
     setup(props, ctx) {
         const audio = ref<HTMLAudioElement>()
@@ -41,7 +44,8 @@ export const TrackPlayer = eventDecorator(defineComponent({
                     playlist: props.playlistID,
                     playing: !audio.value!.paused,
                     time: audio.value!.currentTime,
-                    track: props.selectedTrack.id
+                    track: props.selectedTrack.id,
+                    queuedTrack: props.queuedTrack?.id
                 }))
             } else {
                 if (type == "playback") STATE.speakerManager.sendCommand({ key: "playback", value: props.playbackType })
@@ -49,6 +53,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 if (type == "playing") STATE.speakerManager.sendCommand({ key: "playing", value: !audio.value!.paused })
                 if (type == "time") STATE.speakerManager.sendCommand({ key: "time", value: audio.value!.currentTime })
                 if (type == "track") STATE.speakerManager.sendCommand({ key: "track", value: props.selectedTrack.id })
+                if (type == "queuedTrack") STATE.speakerManager.sendCommand({ key: "queuedTrack", value: props.queuedTrack?.id ?? null })
             }
         }
 
@@ -70,6 +75,12 @@ export const TrackPlayer = eventDecorator(defineComponent({
 
             sendCommand("playlist")
             sendCommand("track")
+        })
+
+        watch(() => props.queuedTrack, (queuedTrack, old) => {
+            if (queuedTrack == old) return
+
+            sendCommand("queuedTrack")
         })
 
         onMounted(() => {
@@ -116,6 +127,10 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 if (sync.track != props.selectedTrack?.id) ctx.emit("selectTrack", sync.track)
             }
 
+            if (sync.queuedTrack != props.queuedTrack?.id) {
+                ctx.emit("queuedTrackChange", sync.queuedTrack ?? null)
+            }
+
             if (audio.value) {
                 if (sync.playing != !audio.value.paused) {
                     if (sync.playing) audio.value.play()
@@ -123,7 +138,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 }
 
                 if (Math.abs(audio.value.currentTime - sync.time) > 0.5) {
-                    audio.value.currentTime = sync.time
+                    audio.value.currentTime = Math.max(0, sync.time - 0.1)
                 }
             }
         }))
@@ -141,6 +156,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
             }
             if (command.key == "playback" && command.value != props.playbackType) ctx.emit("playbackTypeChange", command.value)
             if (command.key == "track" && command.value != props.selectedTrack?.id) ctx.emit("selectTrack", command.value)
+            if (command.key == "queuedTrack" && command.value != props.queuedTrack?.id) ctx.emit("queuedTrackChange", command.value)
 
             if (audio.value) {
                 if (command.key == "playing" && command.value != !audio.value.paused) {
@@ -149,31 +165,42 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 }
 
                 if (command.key == "time") {
-                    audio.value.currentTime = command.value
+                    audio.value.currentTime = command.value - 0.1
                 }
             }
         }))
 
         return () => (
             <TrackView track={props.selectedTrack ?? undefined}>
-                <div class="flex row center-cross">
-                    <div class="flex-fill as-audio-wrapper">
-                        <audio
-                            onEnded={() => (STATE.speakerManager.connected == null || props.authoritative) && ctx.emit("nextTrack")}
-                            onPlay={() => sendCommand("playing")}
-                            onPause={() => sendCommand("playing")}
-                            onSeeking={() => sendCommand("time")}
-                            src={getTrackURL(props.selectedTrack?.url)}
-                            muted={STATE.speakerManager.connected != null && props.authoritative == false}
-                            autoplay controls ref={audio}
+                <>
+                    <div class="flex row center-cross">
+                        <div class="flex-fill as-audio-wrapper">
+                            <audio
+                                onEnded={() => (STATE.speakerManager.connected == null || props.authoritative) && ctx.emit("nextTrack")}
+                                onPlay={() => sendCommand("playing")}
+                                onPause={() => sendCommand("playing")}
+                                onSeeking={() => sendCommand("time")}
+                                src={getTrackURL(props.selectedTrack?.url)}
+                                muted={STATE.speakerManager.connected != null && props.authoritative == false}
+                                autoplay controls ref={audio}
+                            />
+                        </div>
+                        <div class="pb-1">
+                            <Button onClick={() => ctx.emit("playbackTypeChange", "shuffle")} class={props.playbackType == "linear" && "muted"} clear> <Icon icon={mdiShuffle} /> </Button>
+                            <Button onClick={() => ctx.emit("playbackTypeChange", "linear")} class={props.playbackType == "shuffle" && "muted"} clear> <Icon icon={mdiRepeat} /> </Button>
+                            <Button onClick={() => ctx.emit("nextTrack")} clear> <Icon icon={mdiSkipNext} /> </Button>
+                        </div>
+                    </div>
+
+                    {props.queuedTrack && <div class="rounded border p-1 px-2 flex row gap-2 center-cross mx-2">
+                        <small>Up next:</small>
+                        <TrackListEntry
+                            onClick={() => { ctx.emit("selectTrack", props.queuedTrack!.id); ctx.emit("queuedTrackChange", null) }}
+                            track={props.queuedTrack}
+                            class="flex-fill" noRemoveButton
                         />
-                    </div>
-                    <div class="pb-1">
-                        <Button onClick={() => ctx.emit("playbackTypeChange", "shuffle")} class={props.playbackType == "linear" && "muted"} clear> <Icon icon={mdiShuffle} /> </Button>
-                        <Button onClick={() => ctx.emit("playbackTypeChange", "linear")} class={props.playbackType == "shuffle" && "muted"} clear> <Icon icon={mdiRepeat} /> </Button>
-                        <Button onClick={() => ctx.emit("nextTrack")} clear> <Icon icon={mdiSkipNext} /> </Button>
-                    </div>
-                </div>
+                    </div>}
+                </>
             </TrackView>
         )
     }

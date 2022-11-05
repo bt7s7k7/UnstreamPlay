@@ -27,6 +27,11 @@ export function usePlaylist(playlistID: Ref<string | null>) {
     }
     const selectedTrack = computed(() => selectedTrackID.value ? playlist.value?.tracks.find(v => v.id == selectedTrackID.value) : null)
 
+    const queuedTrackID = ref<string | null>(null)
+    const queuedTrack = computed(() => queuedTrackID.value ? playlist.value?.tracks.find(v => v.id == queuedTrackID.value) : null)
+    function selectQueuedTrack(id: string | null) {
+        queuedTrackID.value = id
+    }
 
     const playbackType = ref<PlaybackType>("shuffle")
 
@@ -36,6 +41,12 @@ export function usePlaylist(playlistID: Ref<string | null>) {
         if (playlist.value.tracks.length == 0) return
 
         const currentID = selectedTrackID.value
+
+        if (queuedTrack.value) {
+            selectedTrackID.value = queuedTrack.value.id
+            queuedTrackID.value = null
+            return
+        }
 
         if (playbackType.value == "linear") {
             const index = playlist.value.tracks.findIndex(v => v.id == currentID)
@@ -56,5 +67,5 @@ export function usePlaylist(playlistID: Ref<string | null>) {
         }
     }
 
-    return { playlist, selectTrack, nextTrack, playbackType, selectedTrack, selectedTrackID }
+    return { playlist, selectTrack, nextTrack, playbackType, selectedTrack, selectedTrackID, queuedTrack, selectQueuedTrack }
 }

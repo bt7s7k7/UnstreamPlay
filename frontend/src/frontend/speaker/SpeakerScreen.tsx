@@ -48,7 +48,7 @@ export const SpeakerScreen = (defineComponent({
             }
         }))
 
-        const { playbackType, selectedTrack, nextTrack, playlist, selectTrack } = usePlaylist(playlistID)
+        const { playbackType, selectedTrack, nextTrack, playlist, selectTrack, queuedTrack, selectQueuedTrack } = usePlaylist(playlistID)
 
         return () => (
             <div class="flex-fill flex column center bg-black-transparent">
@@ -64,6 +64,8 @@ export const SpeakerScreen = (defineComponent({
                         onNextTrack={nextTrack}
                         onSelectTrack={selectTrack}
                         onPlaybackTypeChange={v => playbackType.value = v}
+                        queuedTrack={queuedTrack.value ?? undefined}
+                        onQueuedTrackChange={v => selectQueuedTrack(v)}
                         class="flex-fill" authoritative
                     />
                     <div>{label.value && `Speaker label: ${label.value}`}</div>
