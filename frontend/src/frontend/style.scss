@@ -56,3 +56,9 @@ audio::-webkit-media-controls-panel {
     width: 500px;
     height: 700px;
 }
+
+@media (max-height: 800px) {
+    .as-speaker-panel {
+        height: auto;
+    }
+}
