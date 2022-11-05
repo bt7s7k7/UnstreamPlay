@@ -1,4 +1,4 @@
-import { mdiCastAudio, mdiContentCopy, mdiDownload, mdiMagnify, mdiPlaylistMusic } from "@mdi/js"
+import { mdiCastAudio, mdiClose, mdiContentCopy, mdiDownload, mdiMagnify, mdiPlaylistMusic } from "@mdi/js"
 import { computed, defineComponent, ref, toRaw } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ROOT_PLAYLIST_ID } from "../../common/Playlist"
@@ -151,7 +151,10 @@ export const PlaylistScreen = (defineComponent({
                             </Button>
                         </div>
                         <div class="flex row flex-basis-9 center-cross p-2 gap-2 border-bottom">
-                            <h3 class="m-0"> <Icon icon={mdiMagnify} /> </h3>
+                            <h3 class="m-0 user-select-none" onClick={() => searchQuery.value = ""}>
+                                <Icon icon={mdiMagnify} />
+                                {searchQuery.value != "" && <Icon class="absolute bottom-0 left-0 small text-danger" icon={mdiClose} />}
+                            </h3>
                             <TextField vModel={searchQuery.value} noIndicator clear class="flex-fill" placeholder="Search" />
                         </div>
                         <div class="flex-fill bg-black-transparent">
