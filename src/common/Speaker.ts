@@ -12,6 +12,9 @@ export class SpeakerSync extends Struct.define("SpeakerSync", {
     playing: Type.boolean
 }) { }
 
+export const SpeakerCommand_t = Type.keyValuePair(SpeakerSync.baseType)
+export type SpeakerCommand = Type.GetTypeFromTypeWrapper<typeof SpeakerCommand_t>
+
 export class SpeakerState extends Struct.define("SpeakerState", {
     isOwner: Type.boolean,
     id: Type.string
@@ -24,8 +27,10 @@ export const SpeakerManagerContract = StructSyncContract.define(class SpeakerMan
     init: ActionType.define("init", Type.empty, Type.object({ label: Type.string })),
     connect: ActionType.define("connect", Type.object({ speaker: Type.string }), Type.empty),
     disconnect: ActionType.define("disconnect", Type.empty, Type.empty),
-    sendSync: ActionType.define("sendActionToFollowers", SpeakerSync.ref().as(Type.nullable), Type.empty)
+    sendSync: ActionType.define("sendSync", SpeakerSync.ref().as(Type.nullable), Type.empty),
+    sendCommand: ActionType.define("sendCommand", SpeakerCommand_t.as(Type.nullable), Type.empty)
 }, {
     onSync: EventType.define("onSync", SpeakerSync.ref().as(Type.nullable)),
+    onCommand: EventType.define("onCommand", SpeakerCommand_t.as(Type.nullable)),
     onDestroy: EventType.define("onDestroy", Type.empty)
 })

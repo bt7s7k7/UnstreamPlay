@@ -37,6 +37,17 @@ export const SpeakerScreen = (defineComponent({
             }
         }))
 
+        useEventListener(STATE.speakerManager.onCommand.add(null, (command) => {
+            if (command == null) {
+                playlistID.value = null
+                return
+            }
+
+            if (command.key == "playlist") {
+                playlistID.value = command.value
+            }
+        }))
+
         const { playbackType, selectedTrack, nextTrack, playlist, selectTrack } = usePlaylist(playlistID)
 
         return () => (

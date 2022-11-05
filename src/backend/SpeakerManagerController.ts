@@ -1,4 +1,4 @@
-import { SpeakerManagerContract } from "../common/Speaker"
+import { SpeakerCommand_t, SpeakerManagerContract } from "../common/Speaker"
 import { MultiMap } from "../comTypes/MultiMap"
 import { joinIterable, makeRandomID } from "../comTypes/util"
 import { ClientError } from "../structSync/StructSyncServer"
@@ -74,7 +74,8 @@ export class SpeakerManagerController extends SpeakerManagerContract.defineContr
         },
         sendSync: async (msg, meta) => {
             const state = this.getSessionSpeakerState(meta.session)
-            if (state == null) throw new ClientError("Cannot sync with speaker, not connected")
+            if (state == null) throw new ClientError("Cannot sync speaker, not connected")
+            if (!state.isOwner) throw new ClientError("Only owner can send a sync")
 
             const msgSerialized = msg == null ? null : msg.serialize()
 
@@ -88,6 +89,20 @@ export class SpeakerManagerController extends SpeakerManagerContract.defineContr
                     target: EVENT_TARGET
                 })
             }
+        },
+        sendCommand: async (msg, meta) => {
+            const state = this.getSessionSpeakerState(meta.session)
+            if (state == null) throw new ClientError("Cannot send command to speaker, not connected")
+            if (state.isOwner) throw new ClientError("Owner can not send a command")
+
+            const msgSerialized = msg == null ? null : SpeakerCommand_t.serialize(msg)
+
+            state.speaker.owner.emitEvent({
+                type: "event",
+                event: "onCommand",
+                payload: msgSerialized,
+                target: EVENT_TARGET
+            })
         }
     })
 

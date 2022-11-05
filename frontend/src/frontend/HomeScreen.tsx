@@ -21,6 +21,7 @@ export const HomeScreen = (defineComponent({
         const playlists = computed(() => STATE.playlists.playlists)
         const snippets = asyncComputed(() => { }, () => STATE.playlists.getPlaylistsSnippet(), { persist: true })
         const router = useRouter()
+        const startTime = Date.now()
         useTitle("")
 
         const listener = new EventListener()
@@ -57,12 +58,18 @@ export const HomeScreen = (defineComponent({
         onMounted(() => {
             if (casting.value != null) {
                 if (STATE.speakerManager.lastSync == null) return
-                STATE.speakerManager.sendSync(null)
+                if (STATE.speakerManager.connected?.isOwner) {
+                    STATE.speakerManager.sendSync(null)
+                } else {
+                    STATE.speakerManager.sendCommand(null)
+                }
             }
         })
 
         useEventListener(STATE.speakerManager.onSync.add(null, sync => {
+            if (Date.now() - startTime < 700) return
             if (sync == null) return
+
             router.push(`/playlist/${sync.playlist}`)
         }))
 

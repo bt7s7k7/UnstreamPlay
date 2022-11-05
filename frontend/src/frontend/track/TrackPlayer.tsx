@@ -1,6 +1,6 @@
 import { mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
 import { defineComponent, onMounted, onUnmounted, PropType, ref, watch } from "vue"
-import { SpeakerSync } from "../../common/Speaker"
+import { SpeakerCommand, SpeakerSync } from "../../common/Speaker"
 import { Track } from "../../common/Track"
 import { eventDecorator } from "../../eventDecorator"
 import { Button } from "../../vue3gui/Button"
@@ -27,7 +27,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
     setup(props, ctx) {
         const audio = ref<HTMLAudioElement>()
 
-        function syncCasting(overridePlay = false) {
+        function sendCommand(type: SpeakerCommand["key"] | "sync") {
             if (justSynced.value) return
             if (!STATE.speakerManager.connected) return
 
@@ -35,13 +35,21 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 return
             }
 
-            STATE.speakerManager.sendSync(new SpeakerSync({
-                playback: props.playbackType,
-                playlist: props.playlistID,
-                playing: !audio.value!.paused || overridePlay,
-                time: audio.value!.currentTime,
-                track: props.selectedTrack.id
-            }))
+            if (STATE.speakerManager.connected.isOwner) {
+                STATE.speakerManager.sendSync(new SpeakerSync({
+                    playback: props.playbackType,
+                    playlist: props.playlistID,
+                    playing: !audio.value!.paused,
+                    time: audio.value!.currentTime,
+                    track: props.selectedTrack.id
+                }))
+            } else {
+                if (type == "playback") STATE.speakerManager.sendCommand({ key: "playback", value: props.playbackType })
+                if (type == "playlist") STATE.speakerManager.sendCommand({ key: "playlist", value: props.playlistID })
+                if (type == "playing") STATE.speakerManager.sendCommand({ key: "playing", value: !audio.value!.paused })
+                if (type == "time") STATE.speakerManager.sendCommand({ key: "time", value: audio.value!.currentTime })
+                if (type == "track") STATE.speakerManager.sendCommand({ key: "track", value: props.selectedTrack.id })
+            }
         }
 
         watch(() => props.selectedTrack, (selectedTrack, old) => {
@@ -60,7 +68,8 @@ export const TrackPlayer = eventDecorator(defineComponent({
                 navigator.mediaSession.metadata = null
             }
 
-            syncCasting(true)
+            sendCommand("playlist")
+            sendCommand("track")
         })
 
         onMounted(() => {
@@ -83,7 +92,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
         onMounted(() => {
             interval = setInterval(() => {
                 if (props.authoritative) {
-                    syncCasting()
+                    sendCommand("sync")
                 }
             }, 500)
         })
@@ -106,14 +115,42 @@ export const TrackPlayer = eventDecorator(defineComponent({
             if (sync.playlist == props.playlistID) {
                 if (sync.track != props.selectedTrack?.id) ctx.emit("selectTrack", sync.track)
             }
-            
+
             if (audio.value) {
                 if (sync.playing != !audio.value.paused) {
                     if (sync.playing) audio.value.play()
                     else audio.value.pause()
                 }
 
-                audio.value.currentTime = sync.time
+                if (Math.abs(audio.value.currentTime - sync.time) > 0.5) {
+                    audio.value.currentTime = sync.time
+                }
+            }
+        }))
+
+        useEventListener(STATE.speakerManager.onCommand.add(null, command => {
+            justSynced.value = true
+            if (justSyncedTimeout) clearTimeout(justSyncedTimeout)
+            justSyncedTimeout = setTimeout(() => {
+                justSynced.value = false
+            }, 10)
+
+            if (command == null) {
+                STATE.speakerManager.sendSync(null)
+                return
+            }
+            if (command.key == "playback" && command.value != props.playbackType) ctx.emit("playbackTypeChange", command.value)
+            if (command.key == "track" && command.value != props.selectedTrack?.id) ctx.emit("selectTrack", command.value)
+
+            if (audio.value) {
+                if (command.key == "playing" && command.value != !audio.value.paused) {
+                    if (command.value) audio.value.play()
+                    else audio.value.pause()
+                }
+
+                if (command.key == "time") {
+                    audio.value.currentTime = command.value
+                }
             }
         }))
 
@@ -123,9 +160,9 @@ export const TrackPlayer = eventDecorator(defineComponent({
                     <div class="flex-fill as-audio-wrapper">
                         <audio
                             onEnded={() => (STATE.speakerManager.connected == null || props.authoritative) && ctx.emit("nextTrack")}
-                            onPlay={() => syncCasting()}
-                            onPause={() => syncCasting()}
-                            onSeeking={() => syncCasting()}
+                            onPlay={() => sendCommand("playing")}
+                            onPause={() => sendCommand("playing")}
+                            onSeeking={() => sendCommand("time")}
                             src={getTrackURL(props.selectedTrack?.url)}
                             muted={STATE.speakerManager.connected != null && props.authoritative == false}
                             autoplay controls ref={audio}
