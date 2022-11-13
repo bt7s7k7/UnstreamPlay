@@ -9,7 +9,8 @@
         "express": "^4.17.3",
         "jsonwebtoken": "^8.5.1",
         "socket.io": "^4.4.1",
-        "source-map-support": "^0.5.19"
+        "source-map-support": "^0.5.19",
+        "stream-split": "^1.1.0"
     },
     "devDependencies": {
         "@types/express": "^4.17.13",
@@ -25,6 +26,7 @@
     },
     "scripts": {
         "dev": "concurrently --raw --kill-others \"yarn watch\" \"yarn watch-run\"",
+        "test-import": "cd data.local/import && yt-dlp -x \"https://www.youtube.com/watch?v=H8s_cQMuu3Q\" \"https://www.youtube.com/watch?v=dpPm_399xxU\" \"https://www.youtube.com/watch?v=20IY9cE_usM\" \"https://www.youtube.com/watch?v=IJJo3AUF5e8\" \"https://www.youtube.com/watch?v=GNvAb2X7Its\" \"https://www.youtube.com/watch?v=oPwGO2FjGec\"",
         "watch": "tsc --watch --preserveWatchOutput --noEmitOnError",
         "build": "tsc --preserveWatchOutput",
         "watch-run": "nodemon --watch build --delay 1 -x \"node -r source-map-support/register --preserve-symlinks --inspect\" ./build/app/app.js",

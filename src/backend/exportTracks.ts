@@ -4,10 +4,10 @@ import { Track } from "../common/Track"
 import { Logger } from "../logger/Logger"
 import { LogMarker } from "../logger/ObjectDescription"
 import { DataPort } from "./DataPort"
-import { Tracks } from "./tracks/Tracks"
+import { PlaylistController } from "./playlist/PlaylistController"
 import { getSafeTrackFileName } from "./util"
 
-export async function exportTracks(path: string, logger: Logger) {
+export async function exportTracks(path: string, playlist: PlaylistController, logger: Logger) {
     const queue: Promise<void>[] = []
     const existing = new Set(await readdir(path))
     let pending = 0
@@ -24,7 +24,7 @@ export async function exportTracks(path: string, logger: Logger) {
             }] ${track.author} - ${track.label}`
     }
 
-    for (const track of Tracks.listTracks()) {
+    for (const track of playlist.tracks) {
         queue.push((async () => {
             if (!track.url) return
 

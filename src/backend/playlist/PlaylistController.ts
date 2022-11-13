@@ -59,6 +59,8 @@ export class PlaylistController extends PlaylistContract.defineController() {
             this.data.label = label
             this.onInfoChanged.emit(this.getInfo())
             DATABASE.setDirty()
+
+            this.manager.onPlaylistsChanged.emit()
         },
         copyTracksFrom: async ({ playlist }) => {
             if (this.id == ROOT_PLAYLIST_ID) throw new ClientError("Cannot copy tracks into the root playlist")

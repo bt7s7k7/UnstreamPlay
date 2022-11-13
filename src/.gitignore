@@ -8,3 +8,10 @@ comTypes
 simpleDB
 nodeLogger
 logger
+adminUIClient
+adminUICommon
+virtualNetworkModem
+virtualNetwork
+registry
+remoteUIBackend
+remoteUICommon

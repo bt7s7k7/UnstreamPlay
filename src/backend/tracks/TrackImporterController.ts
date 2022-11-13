@@ -5,6 +5,7 @@ import { Track, TractImporterContract } from "../../common/Track"
 import { makeRandomID } from "../../comTypes/util"
 import { DIContext } from "../../dependencyInjection/DIContext"
 import { Logger } from "../../logger/Logger"
+import { LogMarker } from "../../logger/ObjectDescription"
 import { DataPort } from "../DataPort"
 import { getSafeTrackFileName } from "../util"
 import { Tracks } from "./Tracks"
@@ -23,13 +24,18 @@ export class TrackImporterController extends TractImporterContract.defineControl
         }
     })
 
-    public async importTracks() {
+    public async importTracks(isCLI = false) {
         this.mutate(v => v.isRunning = true)
         this.mutate(v => v.downloadOutput = [])
         this.mutate(v => v.downloadedTracks = null)
 
+        const logWrite = (msg: string) => {
+            if (isCLI) this.logger.info`${LogMarker.rawText(msg)}`
+            this.write(msg)
+        }
+
         if (this.settings.playlist) {
-            this.write("Downloader is enabled, starting...")
+            logWrite("Downloader is enabled, starting...")
             const success = await new Promise<boolean>((resolve, reject) => {
                 const type = ENV.DOWNLOADER_TYPE ?? "yt-dlp"
                 const path = ENV.DOWNLOADER_PATH ?? type
@@ -45,17 +51,17 @@ export class TrackImporterController extends TractImporterContract.defineControl
                 })
 
                 dl.stdout.on("data", (chunk) => {
-                    this.write(chunk.toString())
+                    logWrite(chunk.toString())
                 })
 
                 dl.stderr.on("data", (chunk) => {
-                    this.write(chunk.toString())
+                    logWrite(chunk.toString())
                 })
 
                 dl.on("exit", (code) => {
                     if (code == 0) resolve(true)
                     else {
-                        this.write("Program error code: " + code)
+                        logWrite("Program error code: " + code)
                         resolve(false)
                     }
                 })
@@ -71,16 +77,16 @@ export class TrackImporterController extends TractImporterContract.defineControl
             }
         }
 
-        this.write("Reading tracks...")
+        logWrite("Reading tracks...")
         const trackFiles = await DataPort.getTracksToImport()
-        this.write(`Got ${trackFiles.length} tracks`)
+        logWrite(`Got ${trackFiles.length} tracks`)
 
-        this.write("Importing...")
+        logWrite("Importing...")
         const tracks = new Map<string, Track>()
         const queue: Promise<void>[] = []
         let done = 0
         for (const trackFile of trackFiles) {
-            const write = (msg: string) => this.write(`[IMPORT (${done}/${trackFiles.length})] ${trackFile.name} - ${msg}`)
+            const write = (msg: string) => logWrite(`[IMPORT (${done}/${trackFiles.length})] ${trackFile.name} - ${msg}`)
             queue.push((async () => {
 
                 write("Importing: " + trackFile.name)
@@ -116,6 +122,8 @@ export class TrackImporterController extends TractImporterContract.defineControl
             }))
         }
         await Promise.all(queue)
+
+        logWrite("Importing finished")
 
         this.mutate(v => v.isRunning = false)
         this.mutate(v => v.downloadOutput = null)

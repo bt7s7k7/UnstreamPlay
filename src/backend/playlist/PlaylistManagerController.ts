@@ -3,6 +3,7 @@ import { PlaylistData, PlaylistManagerContract, ROOT_PLAYLIST_ID } from "../../c
 import { Track } from "../../common/Track"
 import { makeRandomID } from "../../comTypes/util"
 import { DISPOSE } from "../../eventLib/Disposable"
+import { EventEmitter } from "../../eventLib/EventEmitter"
 import { StructSyncContract } from "../../structSync/StructSyncContract"
 import { ClientError } from "../../structSync/StructSyncServer"
 import { TrackImporterController } from "../tracks/TrackImporterController"
@@ -11,6 +12,7 @@ import { PlaylistController } from "./PlaylistController"
 
 export class PlaylistManagerController extends PlaylistManagerContract.defineController() {
     public playlistControllers = new Map<string, PlaylistController>()
+    public onPlaylistsChanged = new EventEmitter()
 
     public trackImporter: TrackImporterController = null!
 
@@ -24,6 +26,7 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
             DATABASE.put("playlists", playlistData)
 
             this.loadPlaylist(playlistData)
+            this.onPlaylistsChanged.emit()
 
             return playlistData.id
         },
@@ -31,9 +34,12 @@ export class PlaylistManagerController extends PlaylistManagerContract.defineCon
             if (playlist == ROOT_PLAYLIST_ID) throw new ClientError("Cannot delete root playlist")
             const controller = this.playlistControllers.get(playlist)
             if (!controller) throw new ClientError(`There is no playlist with id "${playlist}"`)
+            this.playlistControllers.delete(controller.id)
 
             controller[DISPOSE]()
             DATABASE.delete("playlists", playlist)
+            this.onPlaylistsChanged.emit()
+
             this.mutate(v => v.playlists.delete(playlist))
         },
         getPlaylistsSnippet: async () => {

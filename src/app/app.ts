@@ -1,30 +1,45 @@
-import { renameSync } from "fs"
 import { createServer } from "http"
 import { verify as verifyToken } from "jsonwebtoken"
-import { extname, join } from "path"
+import { join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
+import { AdminUIClient } from "../adminUIClient/AdminUIClient"
 import { DataPort } from "../backend/DataPort"
-import { exportTracks } from "../backend/exportTracks"
 import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
 import { SpeakerManagerController } from "../backend/SpeakerManagerController"
 import { TrackEditorController } from "../backend/tracks/TrackEditorController"
 import { TrackImporterController } from "../backend/tracks/TrackImporterController"
-import { Tracks } from "../backend/tracks/Tracks"
-import { getSafeTrackFileName } from "../backend/util"
 import { stringifyAddress } from "../comTypes/util"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
 import { MessageBridge } from "../dependencyInjection/commonServices/MessageBridge"
 import { DIContext } from "../dependencyInjection/DIContext"
 import { Logger } from "../logger/Logger"
 import { NodeLogger } from "../nodeLogger/NodeLogger"
+import { RouteResolver } from "../remoteUIBackend/RemoteUIController"
 import { StructSyncServer } from "../structSync/StructSyncServer"
 import { StructSyncSession } from "../structSync/StructSyncSession"
+import { Admin } from "./Admin"
 import { ENV } from "./ENV"
 import express = require("express")
 
 const context = new DIContext()
 export const logger = context.provide(Logger, () => new NodeLogger())
+
+async function initAdminUI(admin: Admin) {
+    const client = await AdminUIClient.connect()
+    if (client == null) {
+        logger.warn`Cannot connect to AdminUI`
+        return
+    }
+
+    logger.info`Connected to AdminUI`
+    const { remoteUI } = await client.makeRemoteUI(ENV.ADMIN_UI_NAME ?? "unstream_play")
+    remoteUI.routes = new RouteResolver.Static({
+        routes: {
+            index: admin.ui
+        }
+    })
+}
 
 DataPort.init(logger).catch(err => {
     logger.error`${err}`
@@ -87,35 +102,15 @@ DataPort.init(logger).catch(err => {
         logger.info`Listening on ${"http://" + stringifyAddress(http.address())}`
     })
 
+    const admin = context.instantiate(() => new Admin(trackImporter, speakerManager, playlistManager))
+    initAdminUI(admin)
+    Object.assign(globalThis, admin)
+
     const rl = createInterface(process.stdin, process.stdout)
     rl.setPrompt("")
 
     rl.on("line", (line) => {
         const [command, ...args] = line.split(" ")
-
-        if (command == "import") {
-            trackImporter.importTracks()
-        } else if (command == "reset") {
-            DataPort.deleteEverything().then(() => process.exit(0))
-        } else if (command == "export") {
-            const [path] = args
-            exportTracks(path, logger)
-        } else if (command == "name_tracks") {
-            const trackFolder = DataPort.getTracksFolder()
-
-            for (const track of Tracks.listTracks()) {
-                const oldFilename = track.url
-                const ext = extname(oldFilename)
-                const newFilename = getSafeTrackFileName(track) + "_" + track.id + ext
-                renameSync(join(trackFolder, oldFilename), join(trackFolder, newFilename))
-                Tracks.updateTrack(track, { url: newFilename })
-            }
-        } else if (command == "speakers") {
-            for (const [id, label] of speakerManager.speakers) {
-                logger.info`${id}: ${label}`
-            }
-        } else {
-            logger.error`Unknown command`
-        }
+        admin.runCLICommand(command, args)
     })
 })

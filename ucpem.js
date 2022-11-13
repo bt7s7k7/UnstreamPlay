@@ -11,5 +11,6 @@ project.prefix("src").res("common",
 project.prefix("src").res("backend",
     project.ref("common"),
     github("bt7s7k7/SimpleServer").res("simpleDB"),
-    github("bt7s7k7/LogLib").res("nodeLogger")
+    github("bt7s7k7/LogLib").res("nodeLogger"),
+    github("bt7s7k7/AdminGUI").res("adminUIClient")
 )
