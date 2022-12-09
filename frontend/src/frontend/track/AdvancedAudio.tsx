@@ -1,10 +1,8 @@
-import { mdiEraser } from "@mdi/js"
 import { defineComponent, onMounted, reactive, Ref, watch } from "vue"
 import { unreachable } from "../../comTypes/util"
 import { Type } from "../../struct/Type"
 import { Button } from "../../vue3gui/Button"
 import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
-import { Icon } from "../../vue3gui/Icon"
 import { Overlay } from "../../vue3gui/Overlay"
 
 const state_t = Type.object({
@@ -63,9 +61,8 @@ const AdvancedAudioSettings = (defineComponent({
                 <Overlay show={!state.enabled} class="flex column gap-2" variant="dark">
                     <div class="flex row center-cross">
                         <div class="flex-basis-100">Gain:</div>
-                        <input type="range" value={(state.gain * 100).toFixed(0)} min="0" max="200" step="1" onInput={(event: any) => state.gain = (+event.target.value) / 100} class="flex-fill" />
+                        <input type="range" value={(state.gain * 100).toFixed(0)} min="0" max="100" step="1" onInput={(event: any) => state.gain = (+event.target.value) / 100} class="flex-fill" />
                         <div class="flex-basis-9 monospace ml-1">{(state.gain * 100).toFixed(0)}%</div>
-                        <Button onClick={() => state.gain = 1} clear><Icon icon={mdiEraser} /> </Button>
                     </div>
                 </Overlay>
             </div>
