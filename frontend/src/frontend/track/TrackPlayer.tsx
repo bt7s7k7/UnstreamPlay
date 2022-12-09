@@ -1,4 +1,4 @@
-import { mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
+import { mdiCog, mdiRepeat, mdiShuffle, mdiSkipNext } from "@mdi/js"
 import { defineComponent, onMounted, onUnmounted, PropType, ref, watch } from "vue"
 import { SpeakerCommand, SpeakerSync } from "../../common/Speaker"
 import { Track } from "../../common/Track"
@@ -9,6 +9,7 @@ import { useEventListener } from "../../vue3gui/util"
 import { getIconURL, getTrackURL } from "../constants"
 import { PlaybackType } from "../playlist/usePlaylist"
 import { STATE } from "../State"
+import { useAdvancedAudio } from "./AdvancedAudio"
 import { TrackListEntry } from "./TrackListEntry"
 import { TrackView } from "./TrackView"
 
@@ -29,6 +30,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
     },
     setup(props, ctx) {
         const audio = ref<HTMLAudioElement>()
+        const advancedAudio = useAdvancedAudio(audio)
 
         function sendCommand(type: SpeakerCommand["key"] | "sync") {
             if (justSynced.value) return
@@ -185,6 +187,7 @@ export const TrackPlayer = eventDecorator(defineComponent({
                                 autoplay controls ref={audio}
                             />
                         </div>
+                        <Button onClick={advancedAudio.openSettings} class="absolute as-advanced-audio-button" small clear> <Icon icon={mdiCog} /> </Button>
                         <div class="pb-1">
                             <Button onClick={() => ctx.emit("playbackTypeChange", "shuffle")} class={props.playbackType == "linear" && "muted"} clear> <Icon icon={mdiShuffle} /> </Button>
                             <Button onClick={() => ctx.emit("playbackTypeChange", "linear")} class={props.playbackType == "shuffle" && "muted"} clear> <Icon icon={mdiRepeat} /> </Button>
