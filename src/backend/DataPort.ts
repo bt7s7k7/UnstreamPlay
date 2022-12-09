@@ -1,11 +1,13 @@
 import { mkdir, opendir, readFile, rename, rm, writeFile } from "fs/promises"
+import { TagType } from "jsmediatags/types"
 import { join, parse } from "path"
 import { DATABASE } from "../app/DATABASE"
 import { ENV } from "../app/ENV"
 import { Track } from "../common/Track"
 import { Logger } from "../logger/Logger"
+import jsmediatags = require("jsmediatags")
 
-const TRACK_EXTS = new Set([".opus", ".m4a", ".mp3", ".ogg", ".wav"])
+const TRACK_EXTS = new Set([".opus", ".m4a", ".mp3", ".ogg", ".wav", ".flac"])
 
 let logger: Logger = null!
 const databasePath = join(ENV.DATA_PATH, "db.json")
@@ -18,6 +20,7 @@ export interface TrackToImport {
     name: string
     path: string
     import(name: string): Promise<string>
+    loadTags(): Promise<TagType>
 }
 
 export namespace DataPort {
@@ -59,7 +62,19 @@ export namespace DataPort {
                     const filename = targetName + ext
                     await rename(path, join(tracksPath, filename))
                     return filename
-                }
+                },
+                loadTags() {
+                    return new Promise<TagType>((resolve, reject) => {
+                        jsmediatags.read(path, {
+                            onError(error) {
+                                reject(error)
+                            },
+                            onSuccess(data) {
+                                resolve(data)
+                            },
+                        })
+                    })
+                },
             })
         }
 

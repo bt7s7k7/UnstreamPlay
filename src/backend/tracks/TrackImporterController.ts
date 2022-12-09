@@ -108,6 +108,21 @@ export class TrackImporterController extends TractImporterContract.defineControl
                     } else {
                         write("Failed to get youtube data :(")
                     }
+                } else {
+                    write("Getting tags...")
+                    const tags = await trackFile.loadTags()
+                    if (tags.tags.picture) {
+                        const format = tags.tags.picture.format
+                        const data = tags.tags.picture.data
+                        if (format.startsWith("image/")) {
+                            track.icon = await DataPort.writeTrackIcon(track.id, new Uint8Array(data).buffer, format.substring(6))
+                        } else {
+                            write("Tried to get picture from tags, but format not supported")
+                        }
+                    }
+
+                    if (tags.tags.artist != null) track.author = tags.tags.artist
+                    if (tags.tags.title != null) track.label = tags.tags.title
                 }
 
                 track.url = await trackFile.import(getSafeTrackFileName(track) + "_" + track.id)
