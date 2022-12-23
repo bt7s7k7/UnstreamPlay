@@ -8,7 +8,7 @@
         "dotenv": "^16.0.0",
         "express": "^4.17.3",
         "jsmediatags": "^3.9.7",
-        "jsonwebtoken": "^8.5.1",
+        "jsonwebtoken": "^9.0.0",
         "socket.io": "^4.4.1",
         "source-map-support": "^0.5.19",
         "stream-split": "^1.1.0"
