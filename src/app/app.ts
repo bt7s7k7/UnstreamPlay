@@ -1,18 +1,19 @@
 import { createServer } from "http"
 import { verify as verifyToken } from "jsonwebtoken"
-import { join } from "path"
+import { extname, join } from "path"
 import { createInterface } from "readline"
 import { Server } from "socket.io"
 import { AdminUIClient } from "../adminUIClient/AdminUIClient"
 import { DataPort } from "../backend/DataPort"
-import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
 import { SpeakerManagerController } from "../backend/SpeakerManagerController"
+import { PlaylistManagerController } from "../backend/playlist/PlaylistManagerController"
 import { TrackEditorController } from "../backend/tracks/TrackEditorController"
 import { TrackImporterController } from "../backend/tracks/TrackImporterController"
+import { getSafeTrackFileName } from "../backend/util"
 import { stringifyAddress } from "../comTypes/util"
+import { DIContext } from "../dependencyInjection/DIContext"
 import { IDProvider } from "../dependencyInjection/commonServices/IDProvider"
 import { MessageBridge } from "../dependencyInjection/commonServices/MessageBridge"
-import { DIContext } from "../dependencyInjection/DIContext"
 import { Logger } from "../logger/Logger"
 import { NodeLogger } from "../nodeLogger/NodeLogger"
 import { RouteResolver } from "../remoteUIBackend/RemoteUIController"
@@ -75,6 +76,45 @@ DataPort.init(logger).catch(err => {
             } else {
                 next()
             }
+        })
+    } else {
+        app.get("/api/export", (req, res) => {
+            if (req.query["playlist"] == undefined) {
+                res.status(400)
+                res.end(`Missing GET argument playlist`)
+                return
+            }
+
+            const playlistID = req.query["playlist"] + ""
+            const playlist = playlistManager.playlistControllers.get(playlistID)
+            if (playlist == null) {
+                res.status(404)
+                res.end(`Cannot find playlist with ID: ${JSON.stringify(playlistID)}`)
+                return
+            }
+
+            const result: { url: string, filename: string, label: string }[] = []
+
+            const baseURL = req.baseUrl
+            for (const track of playlist.tracks) {
+                const extension = extname(track.url)
+                const targetName = getSafeTrackFileName(track)
+                    + extension
+                result.push({
+                    url: baseURL + "/tracks/" + track.url,
+                    label: `${track.author} - ${track.label}`,
+                    filename: targetName
+                })
+            }
+
+            res.status(200)
+            res.contentType("json")
+            res.end(JSON.stringify(result))
+        })
+
+        app.get("/api/unstream_receiver.js", (req, res) => {
+            res.status(200)
+            res.sendFile(join(ENV.BASE_DIR, "unstream_receiver.js"))
         })
     }
 
