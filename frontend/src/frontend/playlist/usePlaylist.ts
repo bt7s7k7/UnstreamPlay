@@ -1,5 +1,4 @@
 import { computed, onUnmounted, Ref, ref } from "vue"
-import { Track } from "../../common/Track"
 import { DISPOSE } from "../../eventLib/Disposable"
 import { asyncComputed } from "../../vue3gui/util"
 import { STATE } from "../State"
@@ -10,21 +9,22 @@ export function usePlaylist(playlistID: Ref<string | null>) {
     const playlist = asyncComputed(() => playlistID.value, async (playlistID) => playlistID ? STATE.findPlaylist(playlistID) : null, {
         finalizer: v => v?.[DISPOSE](),
         onSuccess() {
-            history.clear()
+            shuffleBuffer = null
         }
     })
     onUnmounted(() => playlist.value?.[DISPOSE]())
 
+    let shuffleBuffer: string[] | null = null
+
     const selectedTrackID = ref<string | null>(null)
     function selectTrack(id: string) {
         selectedTrackID.value = id
-        history.add(id)
-        if (playlist.value) {
-            while (history.size > 0 && history.size > playlist.value.tracks.length / 2) {
-                history.delete(history.values().next().value)
-            }
+        if (shuffleBuffer != null) {
+            const index = shuffleBuffer.indexOf(id)
+            if (index != -1) shuffleBuffer.splice(index, 1)
         }
     }
+
     const selectedTrack = computed(() => selectedTrackID.value ? playlist.value?.tracks.find(v => v.id == selectedTrackID.value) : null)
 
     const queuedTrackID = ref<string | null>(null)
@@ -35,7 +35,6 @@ export function usePlaylist(playlistID: Ref<string | null>) {
 
     const playbackType = ref<PlaybackType>("shuffle")
 
-    const history = new Set<string>()
     function nextTrack() {
         if (!playlist.value) return
         if (playlist.value.tracks.length == 0) return
@@ -52,18 +51,18 @@ export function usePlaylist(playlistID: Ref<string | null>) {
             const index = playlist.value.tracks.findIndex(v => v.id == currentID)
             selectedTrackID.value = playlist.value.tracks[(index + 1) % playlist.value.tracks.length].id
         } else if (playbackType.value == "shuffle") {
-            let next: Track | null = null
-            let i = 0
-            do {
-                next = playlist.value.tracks[Math.floor(Math.random() * playlist.value.tracks.length)]
-                i++
-            } while (history.has(next.id) && i < 1000)
+            if (shuffleBuffer == null || shuffleBuffer.length == 0) {
+                shuffleBuffer = playlist.value.tracks.map(v => v.id)
 
-            if (next) {
-                selectedTrackID.value = next.id
-            } else {
-                selectedTrackID.value = playlist.value.tracks[0].id
+                for (let i = shuffleBuffer.length; i != 0;) {
+                    const randomIndex = Math.floor(Math.random() * i)
+                    i--;
+
+                    [shuffleBuffer[i], shuffleBuffer[randomIndex]] = [shuffleBuffer[randomIndex], shuffleBuffer[i]]
+                }
             }
+
+            selectedTrackID.value = shuffleBuffer.shift()!
         }
     }
 
