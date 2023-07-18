@@ -64,6 +64,11 @@ audio::-webkit-media-controls-panel {
 }
 
 .as-advanced-audio-button {
-    top: 20px;
-    left: 378px;
+    right: -10px;
+}
+
+.as-volume-editor {
+    &:hover, &.hover-check-force {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
 }
