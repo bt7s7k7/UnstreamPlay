@@ -130,7 +130,7 @@ export class SpeakerManagerController extends SpeakerManagerContract.defineContr
                 curr.speaker.connected.delete(session)
 
                 // Hack to fix crash, sometimes update says entity is not stored, idk
-                if (this.speakerLookup.has(curr.speaker)) return
+                if (!this.speakerLookup.has(curr.speaker)) return
                 this.speakerLookup.update(curr.speaker)
             }
 
