@@ -1,13 +1,15 @@
-import { mdiOpenInNew, mdiPlaylistPlus } from "@mdi/js"
+import { mdiOpenInNew, mdiPencil, mdiPlaylistPlus } from "@mdi/js"
 import { defineComponent, ref } from "vue"
+import { unreachable } from "../../comTypes/util"
 import { Track } from "../../common/Track"
 import { Button } from "../../vue3gui/Button"
 import { useDynamicsEmitter } from "../../vue3gui/DynamicsEmitter"
 import { Icon } from "../../vue3gui/Icon"
 import { TextField } from "../../vue3gui/TextField"
+import { STATE } from "../State"
 import { getIconURL } from "../constants"
 import { PlaylistInclusionForm } from "../playlist/PlaylistInclusionForm"
-import { STATE } from "../State"
+import { useIconSelection } from "./IconSelection"
 
 export const TrackView = (defineComponent({
     name: "TrackView",
@@ -67,11 +69,19 @@ export const TrackView = (defineComponent({
             }
         }
 
+        const iconSelect = useIconSelection(async (icon) => {
+            await STATE.trackEditor.setTrackIcon({ track: props.track?.id ?? unreachable(), icon })
+            props.track!.icon = icon ?? ""
+        })
+
         return () => (
             <div class="flex column">
                 <div class="w-fill flex column center bg-black">
-                    <div class="as-track-icon w-fill">
+                    <div class="as-track-icon w-fill hover-check">
                         <img src={getIconURL(props.track?.icon)} class="absolute-fill img-cover bg-black" />
+                        {props.track != null && (
+                            <Button clear class="absolute if-hover-fade bg-black-transparent right-0 bottom-0" onClick={iconSelect}> <Icon icon={mdiPencil} /> </Button>
+                        )}
                     </div>
                 </div>
                 {ctx.slots.default ? ctx.slots.default?.() : <div class="mt-4"></div>}

@@ -1,4 +1,4 @@
-import { mkdir, opendir, readFile, rename, rm, writeFile } from "fs/promises"
+import { mkdir, opendir, readFile, readdir, rename, rm, writeFile } from "fs/promises"
 import { TagType } from "jsmediatags/types"
 import { join, parse } from "path"
 import { DATABASE } from "../app/DATABASE"
@@ -97,6 +97,11 @@ export namespace DataPort {
 
     export function getIconsFolder() {
         return iconsPath
+    }
+
+    export async function getIconList() {
+        const icons = await readdir(iconsPath)
+        return icons
     }
 
     export function getImportFolder() {
