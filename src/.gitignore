@@ -8,6 +8,7 @@ comTypes
 simpleDB
 nodeLogger
 logger
+prettyPrint
 adminUIClient
 adminUICommon
 virtualNetworkModem

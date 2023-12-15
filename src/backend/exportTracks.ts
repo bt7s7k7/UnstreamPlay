@@ -2,10 +2,10 @@ import { copyFile, readdir } from "fs/promises"
 import { extname, join } from "path"
 import { Track } from "../common/Track"
 import { Logger } from "../logger/Logger"
-import { LogMarker } from "../logger/ObjectDescription"
 import { DataPort } from "./DataPort"
 import { PlaylistController } from "./playlist/PlaylistController"
 import { getSafeTrackFileName } from "./util"
+import { LogMarker } from "../prettyPrint/ObjectDescription"
 
 export async function exportTracks(path: string, playlist: PlaylistController, logger: Logger) {
     const queue: Promise<void>[] = []
